@@ -2,15 +2,18 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
+
+var stopSig = make(chan os.Signal, 1)
 
 func main() {
 	// Create new watcher.
@@ -20,14 +23,56 @@ func main() {
 	}
 	defer watcher.Close()
 
+	signal.Notify(stopSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+
 	// Start listening for events.
 	go watch(watcher)
 	go waiter()
 
-	// TODO: wait for signals
-	<-make(chan struct{})
+	// wait for SIGINT/SIGTERM signals
+	<-stopSig
+	if running != nil && running.Process != nil {
+		Kill()
+	}
+	err = syscall.Kill(0, syscall.SIGKILL)
+	if err != nil {
+		os.Exit(0)
+	} else {
+		os.Exit(1)
+	}
 }
 
+// gracefully stop the running process
+// it's patience only lasts for 3 seconds
+func Kill() {
+	if running != nil && running.Process != nil {
+		err := syscall.Kill(-running.Process.Pid, syscall.SIGTERM)
+		if err != nil {
+			log.Println("Failed to kill process:", err)
+		}
+
+		done := make(chan error)
+		go func() {
+			done <- running.Wait()
+		}()
+
+		select {
+		case <-time.After(3 * time.Second):
+			log.Println("Process did not exit in time, killing it forcefully")
+			err = syscall.Kill(-running.Process.Pid, syscall.SIGKILL)
+			if err != nil {
+				log.Println("Failed to kill process forcefully:", err)
+			}
+		case err := <-done:
+			exitErr, ok := err.(*exec.ExitError)
+			if ok && exitErr != nil && !exitErr.ProcessState.Sys().(syscall.WaitStatus).Exited() {
+				log.Println("Process exited with error:", err)
+			}
+		}
+	}
+}
+
+// looks for modifications in the current directory
 func watch(watcher *fsnotify.Watcher) {
 	// Add current path.
 	Add(watcher, ".")
@@ -35,12 +80,11 @@ func watch(watcher *fsnotify.Watcher) {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
-			if !ok {
+			if !ok { // watcher closed
 				return
 			}
 
 			info, err := os.Stat(event.Name)
-			// errors if the file was deleted
 			if err == nil && info.IsDir() {
 				Add(watcher, event.Name)
 			}
@@ -49,7 +93,9 @@ func watch(watcher *fsnotify.Watcher) {
 				Signals <- true
 			}
 		case err, ok := <-watcher.Errors:
-			log.Println("error:", err)
+			if err != nil {
+				log.Println("Error in reloader:", err)
+			}
 			if !ok {
 				return
 			}
@@ -60,11 +106,12 @@ func watch(watcher *fsnotify.Watcher) {
 //go:embed mug.ignore
 var mugIgnore string
 
+// Adds the current path to the watcher and
+// recursively adds all subdirectories
 func Add(watcher *fsnotify.Watcher, path string) {
 	for _, ignore := range strings.Split(mugIgnore, "\n") {
 		ignore = strings.TrimSpace(ignore)
-		if path == ignore /* || strings.Contains(path, ignore) */ {
-			fmt.Println("Ignoring path:", path, "due to ignore rule:", ignore)
+		if path == ignore {
 			return // ignore this path
 		}
 	}
@@ -117,23 +164,27 @@ func waiter() {
 	}
 }
 
-var runningAppProcess *os.Process
+// a whole terminal for all the processes
+var running *exec.Cmd
 
+// kills the process and rebuilds the application
 func rebuild() {
 	// kills previous process
-	if runningAppProcess != nil {
-		_ = runningAppProcess.Kill()
-	}
+	Kill()
 
 	log.Println("Rebuilding application...")
-	runCmd := exec.Command("go", "run", ".")
-	runCmd.Stdout = os.Stdout
-	runCmd.Stderr = os.Stderr
+	cmd := exec.Command("go", "run", ".")
+	// outputs
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	if err := runCmd.Start(); err != nil {
+	// groups all processes and the current application
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	if err := cmd.Start(); err != nil {
 		log.Printf("❌ Failed to start new process: %v", err)
 		return
 	}
 
-	runningAppProcess = runCmd.Process
+	running = cmd
 }
