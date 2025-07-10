@@ -1,4 +1,4 @@
-module github.com/sh-lucas/coffee-mug
+module github.com/sh-lucas/mug
 
 go 1.23.3
 
