@@ -128,11 +128,8 @@ func Kill() {
 			if err != nil {
 				log.Println("Failed to kill process forcefully:", err)
 			}
-		case err := <-done:
-			exitErr, ok := err.(*exec.ExitError)
-			if ok && exitErr != nil && !exitErr.ProcessState.Sys().(syscall.WaitStatus).Exited() {
-				log.Println("Process exited with error:", err)
-			}
+		case <-done:
+			// process exited gracefully
 		}
 	}
 }
