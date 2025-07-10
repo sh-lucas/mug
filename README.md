@@ -9,3 +9,12 @@ To install, just run:
 ```bash
 go install github.com/sh-lucas/mug
 ```
+
+## Why does this exist?    
+
+Firstly, because I wanted. Secondly, I also want to have a personalized golang experience.    
+This project intends to be bigger one day, having more useful tools under a single command.   
+
+## Why "mug"?
+
+Because I like coffee.    
