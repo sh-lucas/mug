@@ -42,40 +42,13 @@ func main() {
 	}
 }
 
-// gracefully stop the running process
-// it's patience only lasts for 3 seconds
-func Kill() {
-	if running != nil && running.Process != nil {
-		err := syscall.Kill(-running.Process.Pid, syscall.SIGTERM)
-		if err != nil {
-			log.Println("Failed to kill process:", err)
-		}
-
-		done := make(chan error)
-		go func() {
-			done <- running.Wait()
-		}()
-
-		select {
-		case <-time.After(3 * time.Second):
-			log.Println("Process did not exit in time, killing it forcefully")
-			err = syscall.Kill(-running.Process.Pid, syscall.SIGKILL)
-			if err != nil {
-				log.Println("Failed to kill process forcefully:", err)
-			}
-		case err := <-done:
-			exitErr, ok := err.(*exec.ExitError)
-			if ok && exitErr != nil && !exitErr.ProcessState.Sys().(syscall.WaitStatus).Exited() {
-				log.Println("Process exited with error:", err)
-			}
-		}
-	}
-}
-
 // looks for modifications in the current directory
 func watch(watcher *fsnotify.Watcher) {
 	// Add current path.
 	Add(watcher, ".")
+
+	// rebuilds for the first time
+	Signals <- true
 
 	for {
 		select {
@@ -130,6 +103,36 @@ func Add(watcher *fsnotify.Watcher, path string) {
 		fullPath := path + string(os.PathSeparator) + file.Name()
 		if file.IsDir() {
 			Add(watcher, fullPath)
+		}
+	}
+}
+
+// gracefully stop the running process
+// it's patience only lasts for 3 seconds
+func Kill() {
+	if running != nil && running.Process != nil {
+		err := syscall.Kill(-running.Process.Pid, syscall.SIGTERM)
+		if err != nil {
+			log.Println("Failed to kill process:", err)
+		}
+
+		done := make(chan error)
+		go func() {
+			done <- running.Wait()
+		}()
+
+		select {
+		case <-time.After(3 * time.Second):
+			log.Println("Process did not exit in time, killing it forcefully")
+			err = syscall.Kill(-running.Process.Pid, syscall.SIGKILL)
+			if err != nil {
+				log.Println("Failed to kill process forcefully:", err)
+			}
+		case err := <-done:
+			exitErr, ok := err.(*exec.ExitError)
+			if ok && exitErr != nil && !exitErr.ProcessState.Sys().(syscall.WaitStatus).Exited() {
+				log.Println("Process exited with error:", err)
+			}
 		}
 	}
 }
