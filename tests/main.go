@@ -2,14 +2,10 @@ package main
 
 import (
 	"log"
-	"time"
+	"net/http"
 )
 
 func main() {
-	log.Println("Test application running!")
-	for {
-		// Simulate some work
-		log.Println("Working...")
-		time.Sleep(2 * time.Second)
-	}
+	log.Println("Starting server on :8080")
+	http.ListenAndServe(":8080", nil)
 }

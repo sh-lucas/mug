@@ -1,8 +1,11 @@
 package handlers
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 // mug:handler POST /user/create
-func CreateUser() {
+func CreateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Test function in generator package")
 }

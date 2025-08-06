@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -9,6 +11,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
+
+	"golang.org/x/tools/imports"
 )
 
 type HandlerDecl struct {
@@ -17,13 +22,53 @@ type HandlerDecl struct {
 	Path string
 }
 
+//go:embed generated.go.tmpl
+var templateContent string
+
 func Generate() {
 	decls := parseHandlersFolder()
+
+	var output = &strings.Builder{}
+
 	for _, handler := range decls {
 		path, _ := strings.CutPrefix(handler.Path, "// mug:handler ")
 		fmt.Println("Path:   ", path)
 		fmt.Println("Handler:", handler.Name.Name)
+
+		fmt.Fprintf(output, "http.HandleFunc(\"%s\", handlers.%s)\n", path, handler.Name.Name)
 	}
+
+	// Create the output directory if it doesn't exist
+	outputDir := "mug_generated"
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	// Copies ../template/generated.go.tmpl to mug_generated/generated.go
+	generatedFilePath := filepath.Join(outputDir, "generated.go")
+
+	// uses text/template to generate the new file content
+	tmpl, err := template.New("generated.go.tmpl").Parse(templateContent)
+	if err != nil {
+		log.Fatalf("Failed to parse template: %v", err)
+	}
+
+	var buf bytes.Buffer
+
+	if err := tmpl.Execute(&buf, output.String()); err != nil {
+		log.Fatalf("Falha ao executar o template: %v", err)
+	}
+
+	codigoFormatado, err := imports.Process("generated.go", buf.Bytes(), nil)
+	if err != nil {
+		log.Fatalf("Falha ao formatar o código: %v", err)
+	}
+
+	err = os.WriteFile(generatedFilePath, codigoFormatado, 0644)
+	if err != nil {
+		log.Fatalf("Falha ao escrever o arquivo: %v", err)
+	}
+
+	log.Println("Arquivo 'generated.go' criado com sucesso.")
 }
 
 func parseHandlersFolder() (decls []HandlerDecl) {
