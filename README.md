@@ -7,7 +7,7 @@ It's still on development, so I can't guarantee too much.
 To install, just run:   
 
 ```bash
-go install github.com/sh-lucas/mug
+go install github.com/sh-lucas/mug@latest
 ```
 
 ## Why does this exist?    
