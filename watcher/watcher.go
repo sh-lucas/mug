@@ -13,9 +13,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type Task func() *exec.Cmd
+
 var stopSig = make(chan os.Signal, 1)
 
-func Start() {
+func Start(task Task) {
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -27,7 +29,7 @@ func Start() {
 
 	// Start listening for events.
 	go watch(watcher)
-	go waiter()
+	go waiter(task)
 
 	// wait for SIGINT/SIGTERM signals
 	<-stopSig
@@ -38,7 +40,7 @@ func Start() {
 	if err != nil {
 		os.Exit(0)
 	} else {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
@@ -107,6 +109,42 @@ func Add(watcher *fsnotify.Watcher, path string) {
 	}
 }
 
+var Signals = make(chan bool)
+var debouceTime = 350 * time.Millisecond
+
+// a whole terminal for all the processes
+var running *exec.Cmd
+
+// waiter implements a simple debounce logic
+// to avoid multiple rebuilds
+// this means that if you spam ctrl + s, it will only
+// rebuild after 200ms of the last signal
+func waiter(task Task) {
+	for {
+		<-Signals // waits for the first signal
+		timer := time.NewTimer(debouceTime)
+
+	debounceLoop:
+		for {
+			select {
+			case <-Signals:
+				// if a new signal comes before the timer, resets
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(debouceTime)
+			case <-timer.C:
+				// if not, rebuilds already
+				Kill()
+				log.Println("\nRebuilding application...")
+				running = task()
+				Clear()
+				break debounceLoop
+			}
+		}
+	}
+}
+
 // gracefully stop the running process
 // it's patience only lasts for 3 seconds
 func Kill() {
@@ -126,65 +164,19 @@ func Kill() {
 			log.Println("Process did not exit in time, killing it forcefully")
 			err = syscall.Kill(-running.Process.Pid, syscall.SIGKILL)
 			if err != nil {
-				log.Println("Failed to kill process forcefully:", err)
+				log.Fatalln("Failed to kill process forcefully:", err)
 			}
 		case <-done:
 			// process exited gracefully
+			// error ignored because it might
+			// have exited after kill.
 		}
 	}
 }
 
-var Signals = make(chan bool, 5)
-var debouceTime = 200 * time.Millisecond
-
-// waiter implements a simple debounce logic
-// to avoid multiple rebuilds
-// this means that if you spam ctrl + s, it will only
-// rebuild after 200ms of the last signal
-func waiter() {
-	for {
-		<-Signals // waits for the first signal
-		timer := time.NewTimer(debouceTime)
-
-	debounceLoop:
-		for {
-			select {
-			case <-Signals:
-				// if a new signal comes before the timer, resets
-				if !timer.Stop() {
-					<-timer.C
-				}
-				timer.Reset(debouceTime)
-			case <-timer.C:
-				// if not, rebuilds already
-				rebuild()
-				break debounceLoop
-			}
-		}
+func Clear() {
+	// clear the signals channel
+	for len(Signals) > 0 {
+		<-Signals
 	}
-}
-
-// a whole terminal for all the processes
-var running *exec.Cmd
-
-// kills the process and rebuilds the application
-func rebuild() {
-	// kills previous process
-	Kill()
-
-	log.Println("Rebuilding application...")
-	cmd := exec.Command("go", "run", ".")
-	// outputs
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// groups all processes and the current application
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	if err := cmd.Start(); err != nil {
-		log.Printf("❌ Failed to start new process: %v", err)
-		return
-	}
-
-	running = cmd
 }
