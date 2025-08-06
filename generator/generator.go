@@ -11,22 +11,32 @@ import (
 	"strings"
 )
 
+type HandlerDecl struct {
+	Name *ast.Ident        // Name of the function
+	Doc  *ast.CommentGroup // Documentation comment
+	Path string
+}
+
 func Generate() {
-	comments := parseHandlersFolder()
-	for _, comment := range comments {
-		fmt.Println("Handler: ", comment)
+	decls := parseHandlersFolder()
+	for _, handler := range decls {
+		path, _ := strings.CutPrefix(handler.Path, "// mug:handler ")
+		fmt.Println("Path:   ", path)
+		fmt.Println("Handler:", handler.Name.Name)
 	}
 }
 
-func parseHandlersFolder() []string {
-	var comments []string
-
+func parseHandlersFolder() (decls []HandlerDecl) {
 	// gets the path of the handlers directory
 	execPath, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Falha ao obter o caminho do executável: %v", err)
 	}
 	handlersDir := filepath.Join(execPath, "handlers")
+	return getCommentsFromFolder(handlersDir)
+}
+
+func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl) {
 
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, handlersDir, nil, parser.ParseComments)
@@ -39,19 +49,26 @@ func parseHandlersFolder() []string {
 
 	pkg := pkgs["handlers"]
 
+	// for every file on the package
 	for _, file := range pkg.Files {
+		// for every declaration in the file
 		for _, decl := range file.Decls {
+			// if the declaration is a function declaration
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+				// if it has a comment
 				if funcDecl.Doc != nil && len(funcDecl.Doc.List) > 0 {
 					for _, comment := range funcDecl.Doc.List {
 						if strings.HasPrefix(comment.Text, "// mug:handler") {
-							comments = append(comments, comment.Text)
+							decls = append(decls, HandlerDecl{
+								Name: funcDecl.Name,
+								Doc:  funcDecl.Doc,
+								Path: comment.Text,
+							})
 						}
 					}
 				}
 			}
 		}
 	}
-
-	return comments
+	return decls
 }
