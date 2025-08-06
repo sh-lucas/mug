@@ -109,7 +109,7 @@ func Add(watcher *fsnotify.Watcher, path string) {
 	}
 }
 
-var Signals = make(chan bool)
+var Signals = make(chan bool, 1)
 var debouceTime = 350 * time.Millisecond
 
 // a whole terminal for all the processes
@@ -134,7 +134,6 @@ func waiter(task Task) {
 				}
 				timer.Reset(debouceTime)
 			case <-timer.C:
-				// if not, rebuilds already
 				Kill()
 				log.Println("\nRebuilding application...")
 				running = task()
@@ -175,7 +174,6 @@ func Kill() {
 }
 
 func Clear() {
-	// clear the signals channel
 	for len(Signals) > 0 {
 		<-Signals
 	}
