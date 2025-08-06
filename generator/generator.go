@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/sh-lucas/mug/global"
 	"golang.org/x/tools/imports"
 )
 
@@ -31,9 +32,17 @@ func Generate() {
 	var output = &strings.Builder{}
 
 	for _, handler := range decls {
-		path, _ := strings.CutPrefix(handler.Path, "// mug:handler ")
-		fmt.Println("Path:   ", path)
-		fmt.Println("Handler:", handler.Name.Name)
+		path, f := strings.CutPrefix(handler.Path, "// mug:handler ")
+		if !f {
+			path, f = strings.CutPrefix(handler.Path, "//mug:handler ")
+			if !f {
+				log.Fatalf("Invalid handler comment format: %s", handler.Path)
+			}
+		}
+
+		funcName := handler.Name.Name
+
+		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, funcName, global.Cyan, path, global.Reset)
 
 		fmt.Fprintf(output, "http.HandleFunc(\"%s\", handlers.%s)\n", path, handler.Name.Name)
 	}
@@ -67,8 +76,6 @@ func Generate() {
 	if err != nil {
 		log.Fatalf("Falha ao escrever o arquivo: %v", err)
 	}
-
-	log.Println("Arquivo 'generated.go' criado com sucesso.")
 }
 
 func parseHandlersFolder() (decls []HandlerDecl) {
@@ -103,7 +110,8 @@ func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl) {
 				// if it has a comment
 				if funcDecl.Doc != nil && len(funcDecl.Doc.List) > 0 {
 					for _, comment := range funcDecl.Doc.List {
-						if strings.HasPrefix(comment.Text, "// mug:handler") {
+						if strings.HasPrefix(comment.Text, "// mug:handler") ||
+							strings.HasPrefix(comment.Text, "//mug:handler") {
 							decls = append(decls, HandlerDecl{
 								Name: funcDecl.Name,
 								Doc:  funcDecl.Doc,

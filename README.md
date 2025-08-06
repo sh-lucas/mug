@@ -18,3 +18,12 @@ This project intends to be bigger one day, having more useful tools under a sing
 ## Why "mug"?
 
 Because I like coffee.    
+
+
+## TODOS:
+- Auto-generating .env typed stuff.
+- Auto-generating .env.example file.
+- Export default Debounce, Throttle, and stuff.
+- Export a default Rabbit, Mongo and SQL wrappers.
+- Using httpRouter, faster json, and dependency injection.
+- Maybe running docker composes in the way.  

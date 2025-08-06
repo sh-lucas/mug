@@ -16,6 +16,6 @@ func init() {
 }
 
 func Route(addr string) {
-	log.Println(fmt.Sprintf("Starting server on :%s", addr))
+	fmt.Printf("\033[32mStarting server on :%s\033[0m\n", addr)
 	http.ListenAndServe(fmt.Sprintf(":%s", addr), nil)
 }
