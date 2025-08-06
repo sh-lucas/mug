@@ -31,3 +31,4 @@
 ./*.exe
 ./*.log
 ./.bitbucket
+./mug_generated

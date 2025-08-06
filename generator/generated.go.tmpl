@@ -4,7 +4,7 @@
 // Also, it's recommended to use "mug generate" in a go:generate directive
 // in the main package to ensure that this file is generated before the application runs.
 // Using `mug` will, in the future, automatically `run go generate“ for you.
-package mug_generated
+package cup
 
 import (
 	"net/http"
@@ -13,4 +13,9 @@ import (
 func init() {
 	// handlers are registered here:
 	{{.}}
+}
+
+func Route(addr string) {
+	log.Println(fmt.Sprintf("Starting server on :%s", addr))
+	http.ListenAndServe(fmt.Sprintf(":%s", addr), nil)
 }

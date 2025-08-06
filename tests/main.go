@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	cup "github.com/sh-lucas/mug/tests/mug_generated"
 )
 
 func main() {
-	log.Println("Starting server on :8080")
-	http.ListenAndServe(":8080", nil)
+	// example on how to use the cup package
+	// this routes on port 8080 =)
+	cup.Route("8080")
 }

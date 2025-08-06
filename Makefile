@@ -10,10 +10,5 @@ make:
 		go run .	; \
 	';
 
-# watcher test
-watch:
-	@go install .   ;
-	@sh -c '       \
-		cd tests;  \
-		mug watch  \
-	';
+install:
+	@go install .
