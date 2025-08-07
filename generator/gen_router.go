@@ -36,8 +36,7 @@ func GenerateRouter() {
 		fmt.Fprintf(content, "http.HandleFunc(\"%s\", handlers.%s)\n", path, handler.Name.Name)
 	}
 
-	Generate(routerTemplate, content, "router.go")
-
+	Generate(routerTemplate, content, "router", "router.go")
 }
 
 func parseHandlersFolder() (decls []HandlerDecl) {

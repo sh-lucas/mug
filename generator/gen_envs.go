@@ -20,5 +20,5 @@ func GenerateEnvs(envs map[string]string) {
 		fmt.Fprintf(content, "var %s = os.Getenv(\"%s\")\n", k, k)
 	}
 
-	Generate(envsTemplate, content, "envs.go")
+	Generate(envsTemplate, content, "", "envs.go")
 }

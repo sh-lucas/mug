@@ -17,11 +17,18 @@ var routerTemplate string
 
 var outputDir = "mug_generated"
 
-func Generate(templ string, input *strings.Builder, fileName string) error {
+func Generate(templ string, input *strings.Builder, subdir, fileName string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
 	// Copies ../template/generated.go.tmpl to mug_generated/generated.go
+	if subdir != "" {
+		// creates the subdirectory if it does not exist
+		if err := os.MkdirAll(filepath.Join(outputDir, subdir), 0755); err != nil {
+			return fmt.Errorf("failed to create subdirectory: %v", err)
+		}
+		fileName = filepath.Join(subdir, fileName)
+	}
 	generatedFilePath := filepath.Join(outputDir, fileName)
 
 	// uses text/template to generate the new file content
