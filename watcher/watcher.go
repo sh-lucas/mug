@@ -17,6 +17,12 @@ type Task func() *exec.Cmd
 
 var stopSig = make(chan os.Signal, 1)
 
+var Signals = make(chan bool, 1)
+var debouceTime = 350 * time.Millisecond
+
+// a whole terminal for all the processes
+var running *exec.Cmd
+
 func Start(task Task) {
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
@@ -65,7 +71,10 @@ func watch(watcher *fsnotify.Watcher) {
 			}
 
 			if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
-				Signals <- true
+				select {
+				case Signals <- true:
+				default: // skips
+				}
 			}
 		case err, ok := <-watcher.Errors:
 			if err != nil {
@@ -109,12 +118,6 @@ func Add(watcher *fsnotify.Watcher, path string) {
 	}
 }
 
-var Signals = make(chan bool, 1)
-var debouceTime = 350 * time.Millisecond
-
-// a whole terminal for all the processes
-var running *exec.Cmd
-
 // waiter implements a simple debounce logic
 // to avoid multiple rebuilds
 // this means that if you spam ctrl + s, it will only
@@ -135,9 +138,9 @@ func waiter(task Task) {
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
+				clearSignals()
 				log.Println("\nRebuilding application...")
 				running = task()
-				Clear()
 				break debounceLoop
 			}
 		}
@@ -173,7 +176,7 @@ func Kill() {
 	}
 }
 
-func Clear() {
+func clearSignals() {
 	for len(Signals) > 0 {
 		<-Signals
 	}
