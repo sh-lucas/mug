@@ -20,8 +20,8 @@ func main() {
 
 // the process is already killed. Must return new process to track.
 func rebuild() *exec.Cmd {
-	// prepares the statement
-	cmd := exec.Command("go", "run", ".")
+	// prepares the statement nicy (lower priority)
+	cmd := exec.Command("nice", "-n", "15", "go", "run", ".")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	// groups the processes
