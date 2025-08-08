@@ -138,9 +138,9 @@ func waiter(task Task) {
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
-				clearSignals()
 				log.Println("\nRebuilding application...")
 				running = task()
+				clearSignals()
 				break debounceLoop
 			}
 		}
