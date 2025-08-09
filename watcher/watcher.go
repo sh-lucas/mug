@@ -53,7 +53,7 @@ func Start(task Task) {
 // looks for modifications in the current directory
 func watch(watcher *fsnotify.Watcher) {
 	// Add current path.
-	Add(watcher, ".")
+	Add(watcher, ".", 0)
 
 	// rebuilds for the first time
 	Signals <- true
@@ -67,7 +67,7 @@ func watch(watcher *fsnotify.Watcher) {
 
 			info, err := os.Stat(event.Name)
 			if err == nil && info.IsDir() {
-				Add(watcher, event.Name)
+				Add(watcher, event.Name, 1)
 			}
 
 			if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
@@ -75,7 +75,6 @@ func watch(watcher *fsnotify.Watcher) {
 				case Signals <- true:
 				default: // skips
 				}
-				clearChan(watcher.Events)
 			}
 		case err, ok := <-watcher.Errors:
 			if err != nil {
@@ -90,7 +89,10 @@ func watch(watcher *fsnotify.Watcher) {
 
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
-func Add(watcher *fsnotify.Watcher, path string) {
+func Add(watcher *fsnotify.Watcher, path string, depth int) {
+	if depth > 10 {
+		log.Fatalf("Too many folders \n%s\n", path)
+	}
 	if !global.ValidatePath(path) {
 		return // skips if the path is in mugignore
 	}
@@ -108,7 +110,7 @@ func Add(watcher *fsnotify.Watcher, path string) {
 	for _, entry := range entries {
 		if entry.IsDir() {
 			fullPath := path + string(os.PathSeparator) + entry.Name()
-			Add(watcher, fullPath)
+			Add(watcher, fullPath, depth+1)
 		}
 	}
 }
