@@ -1,4 +1,6 @@
 mug_generated
+./mug_generated
+./mug_generated/*
 .git
 temp
 tmp
