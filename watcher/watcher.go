@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/sh-lucas/mug/global"
 )
 
 type Task func() *exec.Cmd
@@ -89,7 +90,7 @@ func watch(watcher *fsnotify.Watcher) {
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
 func Add(watcher *fsnotify.Watcher, path string, depth int) {
-	Walk(path, func(filepath string) {
+	global.Walk(path, func(filepath string) {
 		if err := watcher.Add(filepath); err != nil {
 			log.Fatalf("Could not watch:\n %s\n err: \n%v", filepath, err)
 		}

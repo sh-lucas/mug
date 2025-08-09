@@ -1,4 +1,5 @@
 ./mug_generated
+./handlers
 ./.git
 ./temp
 ./tmp

@@ -1,4 +1,4 @@
-package watcher
+package global
 
 import (
 	_ "embed"

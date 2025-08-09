@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/sh-lucas/mug/global"
-	"github.com/sh-lucas/mug/watcher"
 )
 
 type HandlerDecl struct {
@@ -59,7 +58,7 @@ func parseHandlersFolder() (decls []HandlerDecl, err error) {
 	handlersDir := filepath.Join(execPath, "handlers")
 
 	// parse the subfolders
-	watcher.Walk(handlersDir, func(filepath string) {
+	global.Walk(handlersDir, func(filepath string) {
 		handlerDecls, err := getCommentsFromFolder(filepath)
 		if err != nil {
 			log.Printf("Error parsing handler %s: %v", filepath, err)

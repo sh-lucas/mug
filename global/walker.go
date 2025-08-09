@@ -1,11 +1,9 @@
-package watcher
+package global
 
 import (
 	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/sh-lucas/mug/global"
 )
 
 var maxDepth = 10
@@ -20,12 +18,12 @@ func walkRec(path string, forEach func(entry string), depth int) {
 		log.Fatalf("Too deep folders; path: %s", path)
 	}
 	if !validPath(path) {
-		global.Logf("Ignoring path %s", path)
+		Logf("Ignoring path %s", path)
 		return
 	}
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		global.Logf("Invalid entry. Error: %v", err)
+		Logf("Invalid entry. Error: %v", err)
 	}
 
 	forEach(path)
