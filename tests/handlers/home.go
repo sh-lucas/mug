@@ -8,6 +8,6 @@ import (
 )
 
 // mug:handler GET /
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func GetInfo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Follow me on my website: %s", cup.MY_WEBSITE)
 }

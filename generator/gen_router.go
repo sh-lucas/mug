@@ -74,6 +74,11 @@ func parseHandlersFolder() (decls []HandlerDecl, err error) {
 		}
 
 		subHandler := filepath.Join(handlersDir, entry.Name())
+
+		if !global.ValidatePath(subHandler) {
+			continue // skips things the watcher is not tracking.
+		}
+
 		handlerDecls, err := getCommentsFromFolder(subHandler)
 		if err != nil {
 			log.Printf("Error parsing handler %s: %v", entry.Name(), err)
@@ -94,7 +99,7 @@ func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl, err error) 
 
 	// there should be 1 package inside
 	for pkgName, pkg := range pkgs {
-		log.Println("Found package", pkgName)
+		global.Logf("Found package %s", pkgName)
 		for _, file := range pkg.Files {
 			// for every declaration in the file
 			for _, decl := range file.Decls {

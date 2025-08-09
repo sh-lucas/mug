@@ -6,12 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/sh-lucas/mug/global"
 )
 
 type Task func() *exec.Cmd
@@ -23,9 +22,6 @@ var Signals = make(chan bool, 1)
 var debouceTime = 350 * time.Millisecond
 
 var running *exec.Cmd
-
-//go:embed .mugignore
-var mugIgnore string
 
 func Start(task Task) {
 	// Create new watcher.
@@ -57,7 +53,7 @@ func Start(task Task) {
 // looks for modifications in the current directory
 func watch(watcher *fsnotify.Watcher) {
 	// Add current path.
-	Add(watcher, ".", mugIgnore)
+	Add(watcher, ".")
 
 	// rebuilds for the first time
 	Signals <- true
@@ -71,7 +67,7 @@ func watch(watcher *fsnotify.Watcher) {
 
 			info, err := os.Stat(event.Name)
 			if err == nil && info.IsDir() {
-				Add(watcher, event.Name, mugIgnore)
+				Add(watcher, event.Name)
 			}
 
 			if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
@@ -94,20 +90,15 @@ func watch(watcher *fsnotify.Watcher) {
 
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
-func Add(watcher *fsnotify.Watcher, path string, ignore string) {
-	// ignores new paths from by .mugignore recursively
-	if dotignore, err := os.ReadFile(".mugignore"); err == nil {
-		ignore += string(dotignore)
-	}
-
-	if !validatePath(path) {
+func Add(watcher *fsnotify.Watcher, path string) {
+	if !global.ValidatePath(path) {
 		return // skips if the path is in mugignore
 	}
 
 	if err := watcher.Add(path); err != nil {
 		log.Println("Failed to add path:", path, err)
 	} else {
-		log.Println("tracking path", path)
+		global.Logf("tracking path %s", path)
 	}
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -117,24 +108,9 @@ func Add(watcher *fsnotify.Watcher, path string, ignore string) {
 	for _, entry := range entries {
 		if entry.IsDir() {
 			fullPath := path + string(os.PathSeparator) + entry.Name()
-			Add(watcher, fullPath, ignore)
+			Add(watcher, fullPath)
 		}
 	}
-}
-
-// checks if the path is in mugignore and validates it
-func validatePath(path string) bool {
-	for _, toIgnore := range strings.Split(mugIgnore, "\n") {
-		toIgnore = strings.TrimSpace(toIgnore)
-		ignore, err := filepath.Match(toIgnore, path)
-		if err != nil {
-			log.Fatalf("Invalid Glob in mugignore")
-		}
-		if ignore {
-			return false
-		}
-	}
-	return true
 }
 
 // waiter implements a simple debounce logic
