@@ -14,9 +14,10 @@ import (
 )
 
 type HandlerDecl struct {
-	Name *ast.Ident        // Name of the function
-	Doc  *ast.CommentGroup // Documentation comment
-	Path string
+	Name    *ast.Ident // Name of the function
+	Package string
+	Doc     *ast.CommentGroup // Documentation comment
+	Path    string
 }
 
 func GenerateRouter() {
@@ -41,7 +42,7 @@ func GenerateRouter() {
 			}
 		}
 		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, handler.Name.Name, global.Cyan, path, global.Reset)
-		fmt.Fprintf(content, "http.HandleFunc(\"%s\", handlers.%s)\n", path, handler.Name.Name)
+		fmt.Fprintf(content, "http.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Name.Name)
 	}
 
 	Generate(routerTemplate, content, "router", "router.go")
@@ -51,46 +52,81 @@ func parseHandlersFolder() (decls []HandlerDecl, err error) {
 	// gets the path of the handlers directory
 	execPath, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Falha ao obter o caminho do executável: %v", err)
+		log.Fatalf("Fail getting executable file path: %v", err)
 	}
+
+	// parse the /handlers folder
 	handlersDir := filepath.Join(execPath, "handlers")
-	return getCommentsFromFolder(handlersDir)
+	decls, err = getCommentsFromFolder(handlersDir)
+	if err != nil {
+		log.Println("Could not parse /handlers")
+	}
+
+	// parse the subfolders
+	subHandlers, err := os.ReadDir(handlersDir)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, entry := range subHandlers {
+		if !entry.IsDir() {
+			continue
+		}
+
+		subHandler := filepath.Join(handlersDir, entry.Name())
+		handlerDecls, err := getCommentsFromFolder(subHandler)
+		if err != nil {
+			log.Printf("Error parsing handler %s: %v", entry.Name(), err)
+		}
+
+		decls = append(decls, handlerDecls...)
+	}
+
+	return decls, err
 }
 
 func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl, err error) {
-
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, handlersDir, nil, parser.ParseComments)
-	if err != nil {
-		return []HandlerDecl{}, nil
-	}
-	if len(pkgs) == 0 || pkgs["handlers"] == nil {
-		return nil, nil
+	if err != nil || len(pkgs) != 1 {
+		return []HandlerDecl{}, nil // empty folder, ignore it
 	}
 
-	pkg := pkgs["handlers"]
-
-	// for every file on the package
-	for _, file := range pkg.Files {
-		// for every declaration in the file
-		for _, decl := range file.Decls {
-			// if the declaration is a function declaration
-			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-				// if it has a comment
-				if funcDecl.Doc != nil && len(funcDecl.Doc.List) > 0 {
-					for _, comment := range funcDecl.Doc.List {
-						if strings.HasPrefix(comment.Text, "// mug:handler") ||
-							strings.HasPrefix(comment.Text, "//mug:handler") {
-							decls = append(decls, HandlerDecl{
-								Name: funcDecl.Name,
-								Doc:  funcDecl.Doc,
-								Path: comment.Text,
-							})
-						}
-					}
+	// there should be 1 package inside
+	for pkgName, pkg := range pkgs {
+		log.Println("Found package", pkgName)
+		for _, file := range pkg.Files {
+			// for every declaration in the file
+			for _, decl := range file.Decls {
+				// if the declaration is a function declaration
+				if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+					ParseFunc(pkgName, funcDecl, &decls)
 				}
 			}
 		}
 	}
 	return decls, nil
+}
+
+func ParseFunc(pkgName string, funcDecl *ast.FuncDecl, decls *[]HandlerDecl) {
+	// skips functions without comments
+	if funcDecl.Doc == nil || len(funcDecl.Doc.List) == 0 {
+		return
+	}
+
+	for _, comment := range funcDecl.Doc.List {
+		if verifyPrefix(comment.Text) {
+			*decls = append(*decls, HandlerDecl{
+				Name:    funcDecl.Name,
+				Package: pkgName,
+				Doc:     funcDecl.Doc,
+				Path:    comment.Text,
+			})
+		}
+	}
+}
+
+func verifyPrefix(comment string) bool {
+	return strings.HasPrefix(comment, "// mug:handler") ||
+		strings.HasPrefix(comment, "//mug:handler")
 }
