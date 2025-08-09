@@ -24,7 +24,7 @@ var debouceTime = 350 * time.Millisecond
 
 var running *exec.Cmd
 
-//go:embed mug.ignore
+//go:embed .mugignore
 var mugIgnore string
 
 func Start(task Task) {
@@ -79,6 +79,7 @@ func watch(watcher *fsnotify.Watcher) {
 				case Signals <- true:
 				default: // skips
 				}
+				clearChan(watcher.Events)
 			}
 		case err, ok := <-watcher.Errors:
 			if err != nil {
@@ -158,7 +159,7 @@ func waiter(task Task) {
 				Kill()
 				log.Println("Rebuilding application...")
 				running = task()
-				clearSignals()
+				clearChan(Signals)
 				break debounceLoop
 			}
 		}
@@ -194,8 +195,8 @@ func Kill() {
 	}
 }
 
-func clearSignals() {
-	for len(Signals) > 0 {
-		<-Signals
+func clearChan[T any](c chan T) {
+	for len(c) > 0 {
+		<-c
 	}
 }
