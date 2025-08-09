@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sh-lucas/mug/generator"
@@ -38,12 +39,19 @@ func rebuild() *exec.Cmd {
 	return cmd
 }
 
+var lastEnvUpdate time.Time
+
 // logic for generating all the code before executing the command
 func generateCode(cmd *exec.Cmd) {
 	// auto generates code
 	generator.GenerateRouter()
-	// if there is a .env, generate the code for it
-	// and inject in the prepared process
+
+	// avoid rebuilding this if it weren't modified.
+	info, err := os.Stat(".env")
+	if err != nil || info.ModTime().After(lastEnvUpdate) {
+		return
+	}
+
 	envs, err := godotenv.Read(".env")
 	if err == nil {
 		generator.GenerateEnvs(envs)
@@ -51,5 +59,6 @@ func generateCode(cmd *exec.Cmd) {
 			// injects in the format KEY=VALUE, hope this works well =)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, envs[k]))
 		}
+		lastEnvUpdate = time.Now()
 	}
 }
