@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	godotenv.Read(".env")
 	watcher.Start(rebuild)
 }
 
