@@ -46,19 +46,20 @@ func generateCode(cmd *exec.Cmd) {
 	// auto generates code
 	generator.GenerateRouter()
 
-	// avoid rebuilding this if it weren't modified.
-	info, err := os.Stat(".env")
-	if err != nil || info.ModTime().After(lastEnvUpdate) {
-		return
-	}
-
 	envs, err := godotenv.Read(".env")
 	if err == nil {
-		generator.GenerateEnvs(envs)
 		for k := range envs {
 			// injects in the format KEY=VALUE, hope this works well =)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, envs[k]))
 		}
+
+		// avoid rebuilding this if it weren't modified.
+		info, err := os.Stat(".env")
+		if err != nil || info.ModTime().After(lastEnvUpdate) {
+			return
+		}
+
+		generator.GenerateEnvs(envs)
 		lastEnvUpdate = time.Now()
 	}
 }
