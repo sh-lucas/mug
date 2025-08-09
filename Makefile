@@ -3,7 +3,7 @@ make:
 	@go install .   ;
 	@sh -c '	   	\
 		cd tests;  	\
-		mug; 	   		\
+		mug --gen; 	\
 	';
 	@sh -c '			\
 		cd tests	; \

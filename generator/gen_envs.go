@@ -12,6 +12,7 @@ import (
 var envsTemplate string
 
 func GenerateEnvs(envs map[string]string) {
+	global.Logf("Generating envs package")
 
 	var content = &strings.Builder{}
 	fmt.Println(global.Green + "✅ Loaded .env file" + global.Reset)

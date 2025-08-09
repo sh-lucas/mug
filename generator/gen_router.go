@@ -28,6 +28,7 @@ func GenerateRouter() {
 		log.Println(global.Yellow + "⚠️  No handlers found. Skipping router generation." + global.Reset)
 		return
 	}
+	global.Logf("Generating cup_router package")
 
 	var content = &strings.Builder{}
 
