@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sh-lucas/mug/generator"
@@ -42,7 +41,7 @@ func rebuild() *exec.Cmd {
 
 	// generates code for .env and handlers
 	if *codeGen {
-		generateCode(envs)
+		generateCode()
 	}
 
 	// runs "go run ."
@@ -53,20 +52,10 @@ func rebuild() *exec.Cmd {
 	return cmd
 }
 
-var lastEnvUpdate time.Time
-
 // logic for generating all the code before executing the command
-func generateCode(envs map[string]string) {
-	// auto generates code
-	generator.GenerateRouter()
-
-	// avoid rebuilding this if it weren't modified.
-	info, err := os.Stat(".env")
-
-	if err != nil || lastEnvUpdate.After(info.ModTime()) {
-		return
-	}
-
-	generator.GenerateEnvs(envs)
-	lastEnvUpdate = time.Now()
+func generateCode() {
+	global.WaitMany(
+		generator.GenerateEnvs,
+		generator.GenerateRouter,
+	)
 }
