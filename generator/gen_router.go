@@ -20,7 +20,14 @@ type HandlerDecl struct {
 }
 
 func GenerateRouter() {
-	decls := parseHandlersFolder()
+	decls, err := parseHandlersFolder()
+	if err != nil {
+		panic(err)
+	}
+	if len(decls) == 0 {
+		log.Println(global.Yellow + "⚠️  No handlers found. Skipping router generation." + global.Reset)
+		return
+	}
 
 	var content = &strings.Builder{}
 
@@ -39,7 +46,7 @@ func GenerateRouter() {
 	Generate(routerTemplate, content, "router", "router.go")
 }
 
-func parseHandlersFolder() (decls []HandlerDecl) {
+func parseHandlersFolder() (decls []HandlerDecl, err error) {
 	// gets the path of the handlers directory
 	execPath, err := os.Getwd()
 	if err != nil {
@@ -49,15 +56,15 @@ func parseHandlersFolder() (decls []HandlerDecl) {
 	return getCommentsFromFolder(handlersDir)
 }
 
-func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl) {
+func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl, err error) {
 
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, handlersDir, nil, parser.ParseComments)
 	if err != nil {
-		log.Fatalf("Erro ao analisar o diretório de handlers: %v", err)
+		return []HandlerDecl{}, nil
 	}
 	if len(pkgs) == 0 || pkgs["handlers"] == nil {
-		log.Fatal("Package 'handlers' not found.")
+		return nil, nil
 	}
 
 	pkg := pkgs["handlers"]
@@ -84,5 +91,5 @@ func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl) {
 			}
 		}
 	}
-	return decls
+	return decls, nil
 }
