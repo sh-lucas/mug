@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -18,10 +19,13 @@ type Task func() *exec.Cmd
 var stopSig = make(chan os.Signal, 1)
 
 var Signals = make(chan bool, 1)
+
 var debouceTime = 350 * time.Millisecond
 
-// a whole terminal for all the processes
 var running *exec.Cmd
+
+//go:embed mug.ignore
+var mugIgnore string
 
 func Start(task Task) {
 	// Create new watcher.
@@ -53,7 +57,7 @@ func Start(task Task) {
 // looks for modifications in the current directory
 func watch(watcher *fsnotify.Watcher) {
 	// Add current path.
-	Add(watcher, ".")
+	Add(watcher, ".", mugIgnore)
 
 	// rebuilds for the first time
 	Signals <- true
@@ -67,7 +71,7 @@ func watch(watcher *fsnotify.Watcher) {
 
 			info, err := os.Stat(event.Name)
 			if err == nil && info.IsDir() {
-				Add(watcher, event.Name)
+				Add(watcher, event.Name, mugIgnore)
 			}
 
 			if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
@@ -87,17 +91,16 @@ func watch(watcher *fsnotify.Watcher) {
 	}
 }
 
-//go:embed mug.ignore
-var mugIgnore string
-
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
-func Add(watcher *fsnotify.Watcher, path string) {
-	for _, ignore := range strings.Split(mugIgnore, "\n") {
-		ignore = strings.TrimSpace(ignore)
-		if path == ignore {
-			return // ignore this path
-		}
+func Add(watcher *fsnotify.Watcher, path string, ignore string) {
+	// ignores new paths from by .mugignore recursively
+	if dotignore, err := os.ReadFile(".mugignore"); err == nil {
+		ignore += string(dotignore)
+	}
+
+	if !validatePath(path) {
+		return // skips if the path is in mugignore
 	}
 
 	if err := watcher.Add(path); err != nil {
@@ -105,17 +108,32 @@ func Add(watcher *fsnotify.Watcher, path string) {
 	} else {
 		log.Println("tracking path", path)
 	}
-	files, err := os.ReadDir(path)
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		log.Println("Failed to read directory:", path, err)
 		return
 	}
-	for _, file := range files {
-		fullPath := path + string(os.PathSeparator) + file.Name()
-		if file.IsDir() {
-			Add(watcher, fullPath)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			fullPath := path + string(os.PathSeparator) + entry.Name()
+			Add(watcher, fullPath, ignore)
 		}
 	}
+}
+
+// checks if the path is in mugignore and validates it
+func validatePath(path string) bool {
+	for _, toIgnore := range strings.Split(mugIgnore, "\n") {
+		toIgnore = strings.TrimSpace(toIgnore)
+		ignore, err := filepath.Match(toIgnore, path)
+		if err != nil {
+			log.Fatalf("Invalid Glob in mugignore")
+		}
+		if ignore {
+			return false
+		}
+	}
+	return true
 }
 
 // waiter implements a simple debounce logic
@@ -124,21 +142,21 @@ func Add(watcher *fsnotify.Watcher, path string) {
 // rebuild after 200ms of the last signal
 func waiter(task Task) {
 	for {
-		<-Signals // waits for the first signal
+		<-Signals // waits for signals
 		timer := time.NewTimer(debouceTime)
 
 	debounceLoop:
 		for {
 			select {
 			case <-Signals:
-				// if a new signal comes before the timer, resets
+				// if a new signal comes before the timer, reset
 				if !timer.Stop() {
 					<-timer.C
 				}
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
-				log.Println("\nRebuilding application...")
+				log.Println("Rebuilding application...")
 				running = task()
 				clearSignals()
 				break debounceLoop
