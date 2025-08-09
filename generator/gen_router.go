@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/sh-lucas/mug/global"
+	"github.com/sh-lucas/mug/watcher"
 )
 
 type HandlerDecl struct {
@@ -55,37 +56,17 @@ func parseHandlersFolder() (decls []HandlerDecl, err error) {
 		log.Fatalf("Fail getting executable file path: %v", err)
 	}
 
-	// parse the /handlers folder
 	handlersDir := filepath.Join(execPath, "handlers")
-	decls, err = getCommentsFromFolder(handlersDir)
-	if err != nil {
-		log.Println("Could not parse /handlers")
-	}
 
 	// parse the subfolders
-	subHandlers, err := os.ReadDir(handlersDir)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, entry := range subHandlers {
-		if !entry.IsDir() {
-			continue
-		}
-
-		subHandler := filepath.Join(handlersDir, entry.Name())
-
-		if !global.ValidatePath(subHandler) {
-			continue // skips things the watcher is not tracking.
-		}
-
-		handlerDecls, err := getCommentsFromFolder(subHandler)
+	watcher.Walk(handlersDir, func(filepath string) {
+		handlerDecls, err := getCommentsFromFolder(filepath)
 		if err != nil {
-			log.Printf("Error parsing handler %s: %v", entry.Name(), err)
+			log.Printf("Error parsing handler %s: %v", filepath, err)
 		}
 
 		decls = append(decls, handlerDecls...)
-	}
+	})
 
 	return decls, err
 }

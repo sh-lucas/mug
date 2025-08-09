@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/sh-lucas/mug/global"
 )
 
 type Task func() *exec.Cmd
@@ -90,29 +89,11 @@ func watch(watcher *fsnotify.Watcher) {
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
 func Add(watcher *fsnotify.Watcher, path string, depth int) {
-	if depth > 10 {
-		log.Fatalf("Too many folders \n%s\n", path)
-	}
-	if !global.ValidatePath(path) {
-		return // skips if the path is in mugignore
-	}
-
-	if err := watcher.Add(path); err != nil {
-		log.Println("Failed to add path:", path, err)
-	} else {
-		global.Logf("tracking path %s", path)
-	}
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		log.Println("Failed to read directory:", path, err)
-		return
-	}
-	for _, entry := range entries {
-		if entry.IsDir() {
-			fullPath := path + string(os.PathSeparator) + entry.Name()
-			Add(watcher, fullPath, depth+1)
+	Walk(path, func(filepath string) {
+		if err := watcher.Add(filepath); err != nil {
+			log.Fatalf("Could not watch:\n %s\n err: \n%v", filepath, err)
 		}
-	}
+	})
 }
 
 // waiter implements a simple debounce logic
