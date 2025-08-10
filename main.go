@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"os"
 	"os/exec"
@@ -13,11 +12,7 @@ import (
 	"github.com/sh-lucas/mug/watcher"
 )
 
-var codeGen = flag.Bool("gen", false, "Enables code generation")
-var injEnvs = flag.Bool("env", true, "Disables .env file injection")
-
 func main() {
-	flag.Parse()
 	watcher.Start(rebuild)
 }
 
@@ -33,15 +28,19 @@ func rebuild() *exec.Cmd {
 	// injects environment variables priorizating .env file (as last)
 	cmd.Env = os.Environ()
 	envs, err := godotenv.Read(".env")
-	if *injEnvs && err == nil {
+
+	if err == nil && global.Config.Features.Inj_envs {
 		for k, v := range envs {
 			cmd.Env = append(cmd.Env, k+"="+v)
 		}
 	}
 
 	// generates code for .env and handlers
-	if *codeGen {
-		generateCode()
+	generateCode()
+
+	if !global.Config.Features.Watch {
+		// exits without running the application
+		os.Exit(0)
 	}
 
 	// runs "go run ."
@@ -54,8 +53,13 @@ func rebuild() *exec.Cmd {
 
 // logic for generating all the code before executing the command
 func generateCode() {
-	global.WaitMany(
-		generator.GenerateEnvs,
-		generator.GenerateRouter,
-	)
+	funcs := []func(){}
+	if global.Config.Features.Gen_router {
+		funcs = append(funcs, generator.GenerateRouter)
+	}
+	if global.Config.Features.Gen_envs {
+		funcs = append(funcs, generator.GenerateEnvs)
+	}
+
+	global.WaitMany(funcs...)
 }
