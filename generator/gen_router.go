@@ -26,7 +26,9 @@ func GenerateRouter() {
 		panic(err)
 	}
 	if len(decls) == 0 {
-		log.Println(global.Yellow + "⚠️  No handlers found. Skipping router generation." + global.Reset)
+		if global.Config.Debug {
+			global.Logf(global.Yellow + "⚠️  No handlers found. Skipping router generation." + global.Reset)
+		}
 		return
 	}
 	global.Logf("Generating cup_router package")

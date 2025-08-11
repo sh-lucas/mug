@@ -2,6 +2,7 @@ package watcher
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -117,7 +118,7 @@ func waiter(task Task) {
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
-				log.Println("Rebuilding application...")
+				fmt.Println(global.Blue + "> Rebuilding application" + global.Reset)
 				running = task()
 				clearChan(Signals)
 				break debounceLoop
