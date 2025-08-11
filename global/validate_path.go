@@ -2,6 +2,7 @@ package global
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,12 +27,14 @@ func init() {
 }
 
 func validPath(path string) bool {
+	path = filepath.Base(path)
 	for _, glob := range ignorableGlobs {
 		matched, err := filepath.Match(glob, path)
 		if err != nil {
 			log.Fatalf("invalid glob in mugignore")
 		}
 		if matched {
+			fmt.Printf("Path %s against glob %s\n", path, glob)
 			return false
 		}
 	}

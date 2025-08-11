@@ -1,0 +1,1 @@
+Press ctrl + s to test if the file is being tracked
