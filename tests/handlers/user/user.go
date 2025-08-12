@@ -1,11 +1,15 @@
 package user
 
 import (
-	"fmt"
-	"net/http"
+	"log"
 )
 
-// mug:handler POST /user/login
-func CreateUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "User now logged in.")
+// testing struct desserialization
+type CreateUserInput struct {
+	Username string `json:"username"`
+}
+
+// mug:handler POST /user/register
+func CreateUser(input CreateUserInput) {
+	log.Println(input.Username)
 }

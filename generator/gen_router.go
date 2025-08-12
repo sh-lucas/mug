@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,7 +15,7 @@ import (
 )
 
 type HandlerDecl struct {
-	Name    *ast.Ident // Name of the function
+	Fn      *ast.FuncDecl
 	Package string
 	Doc     *ast.CommentGroup // Documentation comment
 	Path    string
@@ -43,11 +44,39 @@ func GenerateRouter() {
 				log.Fatalf("Invalid handler comment format: %s", handler.Path)
 			}
 		}
-		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, handler.Name.Name, global.Cyan, path, global.Reset)
-		fmt.Fprintf(content, "http.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Name.Name)
+		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, handler.Fn.Name.Name, global.Cyan, path, global.Reset)
+
+		firstArg := handler.Fn.Type.Params.List[0]
+
+		if isResponseWriter(firstArg) {
+			fmt.Fprintf(content, "http.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Fn.Name.Name)
+		} else {
+			argType := types.ExprString(firstArg.Type)
+			fmt.Fprintf(content, "	http.HandleFunc(\"%s\", func(w http.ResponseWriter, r *http.Request) {\n", path)
+			fmt.Fprintf(content, "		var input %s.%s\n", handler.Package, argType)
+			fmt.Fprintf(content, "		err := json.NewDecoder(r.Body).Decode(&input)\n")
+			fmt.Fprintf(content, "		if err != nil { http.Error(w, \"Invalid payload\", 400); return; }\n")
+			fmt.Fprintf(content, "		%s.%s(input)\n", handler.Package, handler.Fn.Name.Name)
+			fmt.Fprintf(content, "	})\n")
+		}
 	}
 
-	Generate(routerTemplate, content, "router", "router.go")
+	err = Generate(routerTemplate, content, "router", "router.go")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func isResponseWriter(field *ast.Field) bool {
+	selector, ok := field.Type.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkgIdent, ok := selector.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	return pkgIdent.Name == "http" && selector.Sel.Name == "ResponseWriter"
 }
 
 func parseHandlersFolder() (decls []HandlerDecl, err error) {
@@ -81,7 +110,7 @@ func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl, err error) 
 
 	// there should be 1 package inside
 	for pkgName, pkg := range pkgs {
-		global.Logf("Found package %s", pkgName)
+		global.Logf("Found handler package %s", pkgName)
 		for _, file := range pkg.Files {
 			// for every declaration in the file
 			for _, decl := range file.Decls {
@@ -104,7 +133,7 @@ func ParseFunc(pkgName string, funcDecl *ast.FuncDecl, decls *[]HandlerDecl) {
 	for _, comment := range funcDecl.Doc.List {
 		if verifyPrefix(comment.Text) {
 			*decls = append(*decls, HandlerDecl{
-				Name:    funcDecl.Name,
+				Fn:      funcDecl,
 				Package: pkgName,
 				Doc:     funcDecl.Doc,
 				Path:    comment.Text,

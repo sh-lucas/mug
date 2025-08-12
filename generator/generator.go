@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,6 +45,7 @@ func Generate(templ string, input *strings.Builder, subdir, fileName string) err
 	}
 	codigoFormatado, err := imports.Process(fileName, buf.Bytes(), nil)
 	if err != nil {
+		log.Printf("Failed code:\n %s\n", buf.String())
 		return fmt.Errorf("failed to format code: %v", err)
 	}
 
