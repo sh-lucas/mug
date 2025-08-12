@@ -7,18 +7,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"golang.org/x/tools/imports"
 )
 
-//go:embed router.go.tmpl
-var routerTemplate string
-
 var outputDir = "mug_generated"
 
-func Generate(templ string, input *strings.Builder, subdir, fileName string) error {
+func Generate(templ string, input any, subdir, fileName string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
@@ -40,7 +36,7 @@ func Generate(templ string, input *strings.Builder, subdir, fileName string) err
 
 	// uses the template to generate the content and formats it.
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, input.String()); err != nil {
+	if err := tmpl.Execute(&buf, input); err != nil {
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 	codigoFormatado, err := imports.Process(fileName, buf.Bytes(), nil)

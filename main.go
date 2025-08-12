@@ -7,7 +7,8 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
-	"github.com/sh-lucas/mug/generator"
+	gen_envs "github.com/sh-lucas/mug/generator/envs"
+	gen_router "github.com/sh-lucas/mug/generator/router"
 	"github.com/sh-lucas/mug/global"
 	"github.com/sh-lucas/mug/watcher"
 )
@@ -55,10 +56,10 @@ func rebuild() *exec.Cmd {
 func generateCode() {
 	funcs := []func(){}
 	if global.Config.Features.Gen_router {
-		funcs = append(funcs, generator.GenerateRouter)
+		funcs = append(funcs, gen_router.GenerateRouter)
 	}
 	if global.Config.Features.Gen_envs {
-		funcs = append(funcs, generator.GenerateEnvs)
+		funcs = append(funcs, gen_envs.GenerateEnvs)
 	}
 
 	global.WaitMany(funcs...)

@@ -1,18 +1,22 @@
-package generator
+package gen_router
 
 import (
+	_ "embed"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"go/types"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/sh-lucas/mug/generator"
 	"github.com/sh-lucas/mug/global"
 )
+
+//go:embed router.go.tmpl
+var routerTemplate string
 
 type HandlerDecl struct {
 	Fn      *ast.FuncDecl
@@ -46,22 +50,15 @@ func GenerateRouter() {
 		}
 		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, handler.Fn.Name.Name, global.Cyan, path, global.Reset)
 
-		firstArg := handler.Fn.Type.Params.List[0]
-
-		if isResponseWriter(firstArg) {
-			fmt.Fprintf(content, "http.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Fn.Name.Name)
+		handlerArgs := handler.Fn.Type.Params.List
+		if len(handlerArgs) > 0 && isResponseWriter(handlerArgs[0]) {
+			printBasicRouter(content, path, handler)
 		} else {
-			argType := types.ExprString(firstArg.Type)
-			fmt.Fprintf(content, "	http.HandleFunc(\"%s\", func(w http.ResponseWriter, r *http.Request) {\n", path)
-			fmt.Fprintf(content, "		var input %s.%s\n", handler.Package, argType)
-			fmt.Fprintf(content, "		err := json.NewDecoder(r.Body).Decode(&input)\n")
-			fmt.Fprintf(content, "		if err != nil { http.Error(w, \"Invalid payload\", 400); return; }\n")
-			fmt.Fprintf(content, "		%s.%s(input)\n", handler.Package, handler.Fn.Name.Name)
-			fmt.Fprintf(content, "	})\n")
+			printInjectRouter(content, path, handler)
 		}
 	}
 
-	err = Generate(routerTemplate, content, "router", "router.go")
+	err = generator.Generate(routerTemplate, content.String(), "router", "router.go")
 	if err != nil {
 		panic(err)
 	}

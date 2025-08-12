@@ -1,4 +1,4 @@
-package generator
+package gen_envs
 
 import (
 	_ "embed"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/sh-lucas/mug/generator"
 	"github.com/sh-lucas/mug/global"
 )
 
@@ -36,6 +37,6 @@ func GenerateEnvs() {
 		fmt.Fprintf(content, "var %s = os.Getenv(\"%s\")\n", k, k)
 	}
 
-	Generate(envsTemplate, content, "", "envs.go")
+	generator.Generate(envsTemplate, content.String(), "", "envs.go")
 	lastEnvUpdate = time.Now()
 }

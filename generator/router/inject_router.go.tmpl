@@ -1,0 +1,11 @@
+http.HandleFunc("{{.Path}}", func(w http.ResponseWriter, r *http.Request) {
+	var input {{.Package}}.{{.Type}}
+	
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil { 
+		http.Error(w, "Invalid payload", 400)
+		return
+	}
+
+	{{printf "%s.%s(input)" .Package .FnName}}
+})
