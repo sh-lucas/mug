@@ -34,6 +34,7 @@ func rebuild() *exec.Cmd {
 		for k, v := range envs {
 			cmd.Env = append(cmd.Env, k+"="+v)
 		}
+		global.Logf(global.Green + "✅ Injecting .env file" + global.Reset)
 	}
 
 	// generates code for .env and handlers

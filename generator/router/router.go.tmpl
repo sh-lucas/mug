@@ -7,6 +7,15 @@ import (
 	"net/http"
 )
 
+var invalidPayloadMsg = `{
+	"error": "Invalid payload"
+}`
+
+var internalErrorMsg = `{
+	"error": "Internal server error",
+	"message": "Handler could not return valid json"
+}`
+
 func init() {
 	// handlers are registered here:
 	{{.}}

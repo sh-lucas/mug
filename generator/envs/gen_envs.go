@@ -31,7 +31,6 @@ func GenerateEnvs() {
 	global.Logf("Generating envs package")
 
 	var content = &strings.Builder{}
-	fmt.Println(global.Green + "✅ Injecting .env file" + global.Reset)
 	for k := range envs {
 		// gets the env as a variable
 		fmt.Fprintf(content, "var %s = os.Getenv(\"%s\")\n", k, k)

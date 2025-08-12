@@ -48,7 +48,7 @@ func GenerateRouter() {
 				log.Fatalf("Invalid handler comment format: %s", handler.Path)
 			}
 		}
-		fmt.Printf("%s[%s] - %s%s\n%s", global.Yellow, handler.Fn.Name.Name, global.Cyan, path, global.Reset)
+		fmt.Printf(global.Yellow+"[%s] - %s%s\n"+global.Reset, handler.Fn.Name.Name, global.Cyan, path)
 
 		handlerArgs := handler.Fn.Type.Params.List
 		if len(handlerArgs) > 0 && isResponseWriter(handlerArgs[0]) {
