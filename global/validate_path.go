@@ -2,7 +2,6 @@ package global
 
 import (
 	_ "embed"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ func validPath(path string) bool {
 			log.Fatalf("invalid glob in mugignore")
 		}
 		if matched {
-			fmt.Printf("Path %s against glob %s\n", path, glob)
+			Logf("Path %s not tracked because of glob %s\n", path, glob)
 			return false
 		}
 	}
