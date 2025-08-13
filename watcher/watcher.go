@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -68,7 +69,9 @@ func watch(watcher *fsnotify.Watcher) {
 
 			info, err := os.Stat(event.Name)
 			if err == nil && info.IsDir() {
-				Add(watcher, event.Name, 1)
+				if global.ValidPath(filepath.Base(info.Name())) {
+					Add(watcher, event.Name, 1)
+				}
 			}
 
 			if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {

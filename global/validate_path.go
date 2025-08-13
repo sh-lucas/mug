@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-func validPath(path string) bool {
+func ValidPath(path string) bool {
 	path = filepath.Base(path)
 	for _, glob := range ignorableGlobs {
 		matched, err := filepath.Match(glob, path)

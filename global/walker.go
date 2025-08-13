@@ -17,7 +17,7 @@ func walkRec(path string, forEach func(entry string), depth int) {
 	if depth > maxDepth {
 		log.Fatalf("Too deep folders; path: %s", path)
 	}
-	if !validPath(path) {
+	if !ValidPath(path) {
 		Logf("Ignoring path %s", path)
 		return
 	}
