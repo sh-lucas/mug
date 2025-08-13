@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/joho/godotenv v1.5.1
-	golang.org/x/tools v0.35.0
+	golang.org/x/tools v0.36.0
 )
 
 require (
