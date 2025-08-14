@@ -23,10 +23,11 @@ const (
 type config struct {
 	Debug    bool `yaml:"debug"`
 	Features struct {
-		Watch      bool `yaml:"watch"`
-		Inj_envs   bool `yaml:"inj_envs"`
-		Gen_router bool `yaml:"gen_router"`
-		Gen_envs   bool `yaml:"gen_envs"`
+		Watch     bool `yaml:"watch"`
+		InjEnvs   bool `yaml:"inj_envs"`
+		AutoTidy  bool `yaml:"startup_tidy"`
+		GenRouter bool `yaml:"gen_router"`
+		GenEnvs   bool `yaml:"gen_envs"`
 	} `yaml:"features"`
 	Services []Service `yaml:"services"`
 }

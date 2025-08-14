@@ -4,10 +4,14 @@
 debug: false
 
 features:
-  watch: true
-  inj_envs: true
-  gen_router: false
-  gen_envs: false
+  watch: true    # rebuilds on file save
+  inj_envs: true # inject your .env file
+  
+  # runs go mod tidy once when `mug` is called
+  startup_tidy: true
+  
+  gen_router: false # generates a router from '// mug:handler' annotations
+  gen_envs: false   # generates code from your .env file
 
 # TODO
 services:

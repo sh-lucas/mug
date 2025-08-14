@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +15,13 @@ import (
 )
 
 func main() {
+	if global.Config.Features.AutoTidy {
+		err := exec.Command("go", "mod", "tidy").Run()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 	watcher.Start(rebuild)
 }
 
@@ -30,7 +38,7 @@ func rebuild() *exec.Cmd {
 	cmd.Env = os.Environ()
 	envs, err := godotenv.Read(".env")
 
-	if err == nil && global.Config.Features.Inj_envs {
+	if err == nil && global.Config.Features.InjEnvs {
 		for k, v := range envs {
 			cmd.Env = append(cmd.Env, k+"="+v)
 		}
@@ -56,10 +64,10 @@ func rebuild() *exec.Cmd {
 // logic for generating all the code before executing the command
 func generateCode() {
 	funcs := []func(){}
-	if global.Config.Features.Gen_router {
+	if global.Config.Features.GenRouter {
 		funcs = append(funcs, gen_router.GenerateRouter)
 	}
-	if global.Config.Features.Gen_envs {
+	if global.Config.Features.GenEnvs {
 		funcs = append(funcs, gen_envs.GenerateEnvs)
 	}
 
