@@ -7,6 +7,15 @@ http.HandleFunc("{{.Path}}", func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = validate.Struct(&input)
+	if err != nil {
+		errMsg := formatValidationErrors(err, trans)
+		w.WriteHeader(400)
+		w.Write(errMsg)
+		return
+	}
+	
+	// calls handler function
 	code, body := {{printf "%s.%s(input)" .Package .FnName}}
 	w.WriteHeader(code)
 	err = json.NewEncoder(w).Encode(body)

@@ -2,7 +2,7 @@ package user
 
 // testing struct desserialization
 type CreateUserInput struct {
-	Username string `json:"username"`
+	Username string `json:"username" validate:"required,min=6"`
 }
 
 type returnType struct {

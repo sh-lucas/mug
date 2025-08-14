@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -16,11 +15,7 @@ import (
 
 func main() {
 	if global.Config.Features.AutoTidy {
-		err := exec.Command("go", "mod", "tidy").Run()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		_ = exec.Command("go", "mod", "tidy").Run()
 	}
 	watcher.Start(rebuild)
 }

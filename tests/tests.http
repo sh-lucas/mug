@@ -4,3 +4,12 @@ Content-Type: application/json
 {
   "username": "catnip-brewer"
 }
+
+
+### username too short
+POST http://localhost:8080/user/register
+Content-Type: application/json
+
+{
+  "username": "Luke"
+}
