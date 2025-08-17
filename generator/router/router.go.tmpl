@@ -1,64 +1,20 @@
-// This is a generated package. It's not intended to be edited manually.
-// This is intended to be generated using the `mug` command.
-// It is used to initialize the package and can contain any necessary setup code.
 package cup_router
 
 import (
 	"net/http"
 	
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/go-chi/chi/v5"
+	keg "github.com/sh-lucas/mug/keg"
 )
 
-var invalidPayloadMsg = `{
-	"error": "Invalid payload"
-}`
-
-var internalErrorMsg = `{
-	"error": "Internal server error",
-	"message": "Handler could not return valid json"
-}`
-
-// validator v10 initialized
-var validate = validator.New(validator.WithRequiredStructEnabled())
-
-func init() {
-	// setup validator json parser
-	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
-	})
-	english := en.New()
-	uni := ut.New(english, english)
-	trans, _ := uni.GetTranslator("en")
-	en_translations.RegisterDefaultTranslations(validate, trans)
-
+func Route(addr string) {
+	router := chi.NewRouter()
+	
 	// handlers are registered here:
 	{{.}}
-}
 
-func Route(addr string) {
 	fmt.Printf("\033[32mStarting server on :%s\033[0m\n", addr)
-	http.ListenAndServe(fmt.Sprintf(":%s", addr), nil)
-}
-
-// funções auxiliares
-// TODO: isolar em outros pacotes
-func formatValidationErrors(err error, trans ut.Translator) []byte {
-	response := make(map[string]string)
-	var validationErrors validator.ValidationErrors
-	if errors.As(err, &validationErrors) {
-		for _, fieldErr := range validationErrors {
-			response[fieldErr.Field()] = fieldErr.Translate(trans)
-		}
-	} else {
-		response["error"] = "invalid input provided"
+	if err := http.ListenAndServe(":"+addr, router); err != nil {
+		log.Fatalf("❌ Could not start server: %s\n", err)
 	}
-	jsonResponse, _ := json.Marshal(response)
-	return jsonResponse
 }

@@ -4,21 +4,15 @@ import (
 	_ "embed"
 	"fmt"
 	"go/ast"
-	"go/types"
 	"log"
-	"os"
 	"strings"
-	"text/template"
 
 	"github.com/sh-lucas/mug/global"
 )
 
 func printBasicRouter(w *strings.Builder, path string, handler HandlerDecl) {
-	fmt.Fprintf(w, "http.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Fn.Name.Name)
+	fmt.Fprintf(w, "router.HandleFunc(\"%s\", %s.%s)\n", path, handler.Package, handler.Fn.Name.Name)
 }
-
-//go:embed inject_router.go.tmpl
-var injectRouterTmpl string
 
 type InjectRouterValues struct {
 	Path    string
@@ -30,14 +24,7 @@ type InjectRouterValues struct {
 var injectRouterSyntaxTmpl = global.Red + "Function %s needs to return (int, any), being 'any' the returned body after json marshalling" + global.Reset
 
 func printInjectRouter(w *strings.Builder, path string, handler HandlerDecl) {
-	handlerArgs := handler.Fn.Type.Params.List
-	argType := types.ExprString(handlerArgs[0].Type)
-
-	// checks the return types if it makes sense
-	if handler.Fn.Type.Results == nil || len(handler.Fn.Type.Results.List) != 2 {
-		fmt.Printf(injectRouterSyntaxTmpl+"\n", handler.Fn.Name)
-		os.Exit(1)
-	}
+	// type checks
 	results := handler.Fn.Type.Results.List
 	identCode, frst := results[0].Type.(*ast.Ident)
 	_, scnd := results[1].Type.(*ast.Ident)
@@ -45,19 +32,8 @@ func printInjectRouter(w *strings.Builder, path string, handler HandlerDecl) {
 		log.Fatalf(injectRouterSyntaxTmpl, handler.Fn.Name)
 	}
 
-	// truly generates the code using another template
-	tmpl, err := template.New("injectRouter").Parse(injectRouterTmpl)
-	if err != nil {
-		log.Fatalf("Template parse error: %v\n", err)
-	}
-
-	err = tmpl.Execute(w, InjectRouterValues{
-		Path:    path,
-		Package: handler.Package,
-		Type:    argType,
-		FnName:  handler.Fn.Name.Name,
-	})
-	if err != nil {
-		log.Fatalf("Template execution error: %v", err)
-	}
+	// code generated route path =)
+	fmt.Fprintf(w, "fmt.Println(\"[%s] %s\")\n", handler.Fn.Name.Name, path)
+	// code generated new router =)
+	fmt.Fprintf(w, "keg.MakeHandler(router, \"%s\", %s.%s)", path, handler.Package, handler.Fn.Name)
 }
