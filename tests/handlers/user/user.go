@@ -12,6 +12,7 @@ type returnType struct {
 }
 
 // mug:handler POST /user/register
+// > CoolMiddleware > FactLoggingMiddleware
 func CreateUser(input CreateUserInput) (code int, body returnType) {
 	if input.Username == "batman" {
 		return 200, returnType{

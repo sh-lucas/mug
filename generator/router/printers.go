@@ -32,8 +32,30 @@ func printInjectRouter(w *strings.Builder, path string, handler HandlerDecl) {
 		log.Fatalf(injectRouterSyntaxTmpl, handler.Fn.Name)
 	}
 
+	// if the last comment contains middleware names, append as last arg
+	mws := strings.Builder{}
+	for _, mw := range getMiddlewares(handler.Doc) {
+		fmt.Fprintf(&mws, "middlewares.%s, ", mw)
+	}
+
 	// code generated route path =)
 	fmt.Fprintf(w, "fmt.Println(\"[%s] %s\")\n", handler.Fn.Name.Name, path)
+
 	// code generated new router =)
-	fmt.Fprintf(w, "keg.MakeHandler(router, \"%s\", %s.%s)", path, handler.Package, handler.Fn.Name)
+	fmt.Fprintf(
+		w, "keg.MakeHandler(router, \"%s\", %s.%s, %s)",
+		path, handler.Package, handler.Fn.Name, mws.String(),
+	)
+}
+
+func getMiddlewares(comment *ast.CommentGroup) []string {
+	comments := comment.List
+	last := comments[len(comments)-1].Text
+	// verifies and cuts off the comment part
+	if strings.HasPrefix(last, "// > ") || strings.HasPrefix(last, "//> ") {
+		last = strings.TrimPrefix(last, "// >")
+		last = strings.TrimPrefix(last, "//>")
+		return strings.Split(last, " > ")
+	}
+	return []string{}
 }
