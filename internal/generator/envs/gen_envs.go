@@ -1,4 +1,4 @@
-package gen_envs
+package envs
 
 import (
 	_ "embed"
@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/sh-lucas/mug/generator"
-	"github.com/sh-lucas/mug/helpers"
+	"github.com/sh-lucas/mug/internal/generator"
+	"github.com/sh-lucas/mug/internal/helpers"
 )
 
 //go:embed envs.go.tmpl

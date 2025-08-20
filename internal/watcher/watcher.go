@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/sh-lucas/mug/helpers"
+	"github.com/sh-lucas/mug/internal/helpers"
 )
 
 type Task func() *exec.Cmd

@@ -1,4 +1,4 @@
-package gen_router
+package router
 
 import (
 	_ "embed"
@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sh-lucas/mug/generator"
-	"github.com/sh-lucas/mug/helpers"
+	"github.com/sh-lucas/mug/internal/generator"
+	"github.com/sh-lucas/mug/internal/helpers"
 )
 
 //go:embed router.go.tmpl

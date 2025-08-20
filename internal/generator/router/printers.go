@@ -1,4 +1,4 @@
-package gen_router
+package router
 
 import (
 	_ "embed"
@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/sh-lucas/mug/helpers"
+	"github.com/sh-lucas/mug/internal/helpers"
 )
 
 func printBasicRouter(w *strings.Builder, path string, handler HandlerDecl) {

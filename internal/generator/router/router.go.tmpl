@@ -4,13 +4,13 @@ import (
 	"net/http"
 	
 	"github.com/go-chi/chi/v5"
-	keg "github.com/sh-lucas/mug/keg"
+	"github.com/sh-lucas/mug/pkg/keg"
 )
 
 func Route(addr string) {
 	router := chi.NewRouter()
 	
-	// handlers are registered here:
+	// handlers:
 	{{.}}
 
 	fmt.Printf("\033[32mStarting server on :%s\033[0m\n", addr)

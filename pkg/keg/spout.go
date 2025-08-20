@@ -14,7 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sh-lucas/mug/helpers"
+	"github.com/sh-lucas/mug/internal/helpers"
 )
 
 type kegHandler[T any, U any] func(input T) (code int, body U)
