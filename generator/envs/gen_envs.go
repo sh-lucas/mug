@@ -9,7 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/sh-lucas/mug/generator"
-	"github.com/sh-lucas/mug/global"
+	"github.com/sh-lucas/mug/helpers"
 )
 
 //go:embed envs.go.tmpl
@@ -28,7 +28,7 @@ func GenerateEnvs() {
 		return
 	}
 
-	global.Logf("Generating envs package")
+	helpers.Logf("Generating envs package")
 
 	var content = &strings.Builder{}
 	for k := range envs {

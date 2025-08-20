@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/sh-lucas/mug/global"
+	"github.com/sh-lucas/mug/helpers"
 )
 
 type Task func() *exec.Cmd
@@ -69,7 +69,7 @@ func watch(watcher *fsnotify.Watcher) {
 
 			info, err := os.Stat(event.Name)
 			if err == nil && info.IsDir() {
-				if global.ValidPath(filepath.Base(info.Name())) {
+				if helpers.ValidPath(filepath.Base(info.Name())) {
 					Add(watcher, event.Name, 1)
 				}
 			}
@@ -94,7 +94,7 @@ func watch(watcher *fsnotify.Watcher) {
 // Adds the current path to the watcher and
 // recursively adds all subdirectories
 func Add(watcher *fsnotify.Watcher, path string, depth int) {
-	global.Walk(path, func(filepath string) {
+	helpers.Walk(path, func(filepath string) {
 		if err := watcher.Add(filepath); err != nil {
 			log.Fatalf("Could not watch:\n %s\n err: \n%v", filepath, err)
 		}
@@ -121,7 +121,7 @@ func waiter(task Task) {
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
-				fmt.Println(global.Blue + "> Rebuilding application" + global.Reset)
+				fmt.Println(helpers.Blue + "> Rebuilding application" + helpers.Reset)
 				running = task()
 				clearChan(Signals)
 				break debounceLoop

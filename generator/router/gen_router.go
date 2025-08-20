@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/sh-lucas/mug/generator"
-	"github.com/sh-lucas/mug/global"
+	"github.com/sh-lucas/mug/helpers"
 )
 
 //go:embed router.go.tmpl
@@ -31,12 +31,12 @@ func GenerateRouter() {
 		panic(err)
 	}
 	if len(decls) == 0 {
-		if global.Config.Debug {
-			global.Logf(global.Yellow + "⚠️  No handlers found. Skipping router generation." + global.Reset)
+		if helpers.Config.Debug {
+			helpers.Logf(helpers.Yellow + "⚠️  No handlers found. Skipping router generation." + helpers.Reset)
 		}
 		return
 	}
-	global.Logf("Generating cup_router package")
+	helpers.Logf("Generating cup_router package")
 
 	var content = &strings.Builder{}
 
@@ -48,7 +48,7 @@ func GenerateRouter() {
 				log.Fatalf("Invalid handler comment format: %s", handler.Path)
 			}
 		}
-		fmt.Printf(global.Yellow+"[%s] - %s%s\n"+global.Reset, handler.Fn.Name.Name, global.Cyan, path)
+		fmt.Printf(helpers.Yellow+"[%s] - %s%s\n"+helpers.Reset, handler.Fn.Name.Name, helpers.Cyan, path)
 
 		handlerArgs := handler.Fn.Type.Params.List
 		if len(handlerArgs) > 0 && isResponseWriter(handlerArgs[0]) {
@@ -86,7 +86,7 @@ func parseHandlersFolder() (decls []HandlerDecl, err error) {
 	handlersDir := filepath.Join(execPath, "handlers")
 
 	// parse the subfolders
-	global.Walk(handlersDir, func(filepath string) {
+	helpers.Walk(handlersDir, func(filepath string) {
 		handlerDecls, err := getCommentsFromFolder(filepath)
 		if err != nil {
 			log.Printf("Error parsing handler %s: %v", filepath, err)
@@ -107,7 +107,7 @@ func getCommentsFromFolder(handlersDir string) (decls []HandlerDecl, err error) 
 
 	// there should be 1 package inside
 	for pkgName, pkg := range pkgs {
-		global.Logf("Found handler package %s", pkgName)
+		helpers.Logf("Found handler package %s", pkgName)
 		for _, file := range pkg.Files {
 			// for every declaration in the file
 			for _, decl := range file.Decls {

@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/sh-lucas/mug/global"
+	"github.com/sh-lucas/mug/helpers"
 )
 
 func printBasicRouter(w *strings.Builder, path string, handler HandlerDecl) {
@@ -21,7 +21,7 @@ type InjectRouterValues struct {
 	FnName  string
 }
 
-var injectRouterSyntaxTmpl = global.Red + "Function %s needs to return (int, any), being 'any' the returned body after json marshalling" + global.Reset
+var injectRouterSyntaxTmpl = helpers.Red + "Function %s needs to return (int, any), being 'any' the returned body after json marshalling" + helpers.Reset
 
 func printInjectRouter(w *strings.Builder, path string, handler HandlerDecl) {
 	// type checks
