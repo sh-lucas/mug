@@ -43,7 +43,7 @@ func printInjectRouter(w *strings.Builder, path string, handler HandlerDecl) {
 
 	// code generated new router =)
 	fmt.Fprintf(
-		w, "keg.MakeHandler(router, \"%s\", %s.%s, %s)",
+		w, "espresso.MakeHandler(router, \"%s\", %s.%s, %s)",
 		path, handler.Package, handler.Fn.Name, mws.String(),
 	)
 }
