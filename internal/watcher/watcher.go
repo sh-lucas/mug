@@ -44,12 +44,6 @@ func Start(task Task) {
 	if running != nil && running.Process != nil {
 		Kill()
 	}
-	err = syscall.Kill(0, syscall.SIGKILL)
-	if err != nil {
-		os.Exit(0)
-	} else {
-		log.Fatal(err)
-	}
 }
 
 // looks for modifications in the current directory
