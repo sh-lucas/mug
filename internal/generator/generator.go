@@ -12,13 +12,13 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-var outputDir = "mug_generated"
+var outputDir = "cup"
 
 func Generate(templ string, input any, subdir, fileName string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
-	// Copies ../template/generated.go.tmpl to mug_generated/generated.go
+	// Copies ../template/generated.go.tmpl to cup/generated.go
 	if subdir != "" {
 		// creates the subdirectory if it does not exist
 		if err := os.MkdirAll(filepath.Join(outputDir, subdir), 0755); err != nil {

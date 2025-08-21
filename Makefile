@@ -3,8 +3,8 @@ make:
 	@go install ./cmd/mug/   ;
 	@sh -c '	   	\
 		cd tests;  	\
-		mug -gen; 	\
+		mug; 	\
 	';
 
 install:
-	@go install .
+	@go install ./cmd/mug/

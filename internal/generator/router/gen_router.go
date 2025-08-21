@@ -2,7 +2,6 @@ package router
 
 import (
 	_ "embed"
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -36,7 +35,7 @@ func GenerateRouter() {
 		}
 		return
 	}
-	helpers.Logf("Generating cup_router package")
+	helpers.Logf("Generating router package")
 
 	var content = &strings.Builder{}
 
@@ -48,7 +47,7 @@ func GenerateRouter() {
 				log.Fatalf("Invalid handler comment format: %s", handler.Path)
 			}
 		}
-		fmt.Printf(helpers.Yellow+"[%s] - %s%s\n"+helpers.Reset, handler.Fn.Name.Name, helpers.Cyan, path)
+		// fmt.Printf(helpers.Yellow+"[%s] - %s%s\n"+helpers.Reset, handler.Fn.Name.Name, helpers.Cyan, path)
 
 		handlerArgs := handler.Fn.Type.Params.List
 		if len(handlerArgs) > 0 && isResponseWriter(handlerArgs[0]) {

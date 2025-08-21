@@ -1,8 +1,8 @@
 package main
 
 import (
-	cup "github.com/sh-lucas/mug/tests/mug_generated"
-	cup_router "github.com/sh-lucas/mug/tests/mug_generated/router"
+	cup "github.com/sh-lucas/mug/tests/cup"
+	router "github.com/sh-lucas/mug/tests/cup/router"
 )
 
 func main() {
@@ -12,5 +12,5 @@ func main() {
 		panic("TEST env is not set to 'TestValue1'")
 	}
 
-	cup_router.Route("8080")
+	router.Route("8080")
 }

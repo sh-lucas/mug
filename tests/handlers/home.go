@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cup "github.com/sh-lucas/mug/tests/mug_generated"
+	cup "github.com/sh-lucas/mug/tests/cup"
 )
 
 // mug:handler GET /

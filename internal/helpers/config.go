@@ -41,10 +41,9 @@ func init() {
 		setConfig(defaultFile)
 		return
 	}
-
 	// empty file -> fill defaults
 	if len(cfgFile) == 0 {
-		_ = os.WriteFile(defaultConfigName, defaultFile, 0644)
+		DumpConfig()
 		cfgFile = defaultFile
 	}
 	setConfig(cfgFile)
@@ -55,4 +54,8 @@ func setConfig(file []byte) {
 	if err != nil {
 		log.Fatalf("Could not load config file %s: %v", defaultConfigName, err)
 	}
+}
+
+func DumpConfig() {
+	_ = os.WriteFile(defaultConfigName, defaultFile, 0644)
 }

@@ -12,8 +12,3 @@ features:
   
   gen_router: true # generates a router from '// mug:handler' annotations
   gen_envs: true   # generates code from your .env file
-
-# TODO
-services:
-  - rabbit
-  - mongo

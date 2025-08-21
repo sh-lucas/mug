@@ -1,70 +1,103 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 
-	"github.com/joho/godotenv"
-	"github.com/sh-lucas/mug/internal/generator/envs"
-	"github.com/sh-lucas/mug/internal/generator/router"
 	"github.com/sh-lucas/mug/internal/helpers"
 	"github.com/sh-lucas/mug/internal/watcher"
+	"github.com/spf13/cobra"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "mug",
+	Short: "Get a mug of coffee and relax.",
+	Long:  "Mug is a router generator, code rebuilder, .env loader, and backend framework. Simply use `mug` to run in default settings, or configure the settings using `mug init`",
+	Run: func(cmd *cobra.Command, args []string) {
+		watcher.Start(func() *exec.Cmd {
+			cmd := getBuildCmd()
+
+			generateCode()
+			if helpers.Config.Features.AutoTidy {
+				_ = exec.Command("go", "mod", "tidy").Run()
+			}
+
+			injectEnvs(cmd)
+
+			if err := cmd.Start(); err != nil {
+				fmt.Printf("❌ Could not start server: %s\n", err)
+			}
+			return cmd
+		},
+		)
+	},
+}
+
+var watchCmd = &cobra.Command{
+	Use:   "watch",
+	Short: "Watches for file changes and rebuilds",
+	Long:  "Start the application and automatically rebuild with file changes. add `-gen` to also generate code.",
+	Run: func(cmd *cobra.Command, args []string) {
+		watcher.Start(func() *exec.Cmd {
+			cmd := getBuildCmd()
+
+			injectEnvs(cmd)
+
+			if err := cmd.Start(); err != nil {
+				fmt.Printf("❌ Could not start server: %s\n", err)
+			}
+			return cmd
+		})
+	},
+}
+
+var genCmd = &cobra.Command{
+	Use:   "gen",
+	Short: "Only generates code.",
+	Long:  "Generates the specified router/env packages for rapid easier development.",
+	Run: func(cmd *cobra.Command, args []string) {
+		generateCode()
+	},
+}
+
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Dump default settings; empty variables will get defaults too.",
+	Run: func(cmd *cobra.Command, args []string) {
+		helpers.DumpConfig()
+	},
+}
+
+// build not yet implemented
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "Compila o projeto (não implementado)",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("🚧 Command 'build' not yet implemented.")
+	},
+}
+
+// make not yet implemented
+var makeCmd = &cobra.Command{
+	Use:   "make",
+	Short: "Executa tarefas de automação (não implementado)",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("🚧 Command 'make' not yet implemented.")
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(watchCmd)
+	rootCmd.AddCommand(genCmd)
+	rootCmd.AddCommand(initCmd)
+	// rootCmd.AddCommand(buildCmd)
+	// rootCmd.AddCommand(makeCmd)
+}
+
 func main() {
-	if helpers.Config.Features.AutoTidy {
-		_ = exec.Command("go", "mod", "tidy").Run()
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Ocorreu um erro: '%s'", err)
+		os.Exit(1)
 	}
-	watcher.Start(rebuild)
-}
-
-// the process is already killed. Must return new process to track.
-func rebuild() *exec.Cmd {
-	// prepares the statement nicely (lower priority)
-	cmd := exec.Command("nice", "-n", "15", "go", "run", ".")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	// groups the processes
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	// injects environment variables priorizating .env file (as last)
-	cmd.Env = os.Environ()
-	envs, err := godotenv.Read(".env")
-
-	if err == nil && helpers.Config.Features.InjEnvs {
-		for k, v := range envs {
-			cmd.Env = append(cmd.Env, k+"="+v)
-		}
-		helpers.Logf(helpers.Green + "✅ Injecting .env file" + helpers.Reset)
-	}
-
-	// generates code for .env and handlers
-	generateCode()
-
-	if !helpers.Config.Features.Watch {
-		// exits without running the application
-		os.Exit(0)
-	}
-
-	// runs "go run ."
-	if err := cmd.Start(); err != nil {
-		log.Printf(helpers.Red+"❌ Failed to start new process: %v", err)
-	}
-
-	return cmd
-}
-
-// logic for generating all the code before executing the command
-func generateCode() {
-	funcs := []func(){}
-	if helpers.Config.Features.GenRouter {
-		funcs = append(funcs, router.GenerateRouter)
-	}
-	if helpers.Config.Features.GenEnvs {
-		funcs = append(funcs, envs.GenerateEnvs)
-	}
-
-	helpers.WaitMany(funcs...)
 }

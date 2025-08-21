@@ -2,7 +2,7 @@
 
 __Mug__ is a code-rebuilding tool, environment variable wrapper and router-glue-code-generating cli-tool written in go.   
 This is meant to make the golang developer's life a bit easier with batteries-included experience.    
-It loads your environment and generates a folder `mug_generated` in the current folder.   
+It loads your environment and generates a folder `cup` in the current folder.   
 
 Today, `mug` is currently generating two packages inside of this folder:
 - __cup_router__: a simple package that routes every `//mug:handler <path>` to the default http's handler. Use `cup_router.Route()` to bind to the port.
