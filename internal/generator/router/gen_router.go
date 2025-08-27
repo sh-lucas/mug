@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sh-lucas/mug/internal/config"
 	"github.com/sh-lucas/mug/internal/generator"
 	"github.com/sh-lucas/mug/internal/helpers"
 )
@@ -30,7 +31,7 @@ func GenerateRouter() {
 		panic(err)
 	}
 	if len(decls) == 0 {
-		if helpers.Config.Debug {
+		if config.Global.Debug {
 			helpers.Logf(helpers.Yellow + "⚠️  No handlers found. Skipping router generation." + helpers.Reset)
 		}
 		return

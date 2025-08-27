@@ -1,14 +1,12 @@
-# mug's config file.
-# You can delete this file and it will not polute your project's tree.
-# You can empty this file and run `mug` to reset it to default.
-debug: true
+debug: false
 
-features:
-  watch: true    # rebuilds on file save
-  inj_envs: true # inject your .env file
-  
-  # runs go mod tidy once when `mug` is called
-  startup_tidy: true
-  
-  gen_router: true # generates a router from '// mug:handler' annotations
-  gen_envs: true   # generates code from your .env file
+watch:
+  active: true
+  inject_envs: .env
+  gen: true
+  mod_tidy: true
+  delay: 300
+
+gen:
+  router: false
+  envs: false

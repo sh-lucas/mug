@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
+	"github.com/sh-lucas/mug/internal/config"
 	"github.com/sh-lucas/mug/internal/generator/envs"
 	"github.com/sh-lucas/mug/internal/generator/router"
 	"github.com/sh-lucas/mug/internal/helpers"
@@ -26,22 +27,24 @@ func getBuildCmd() *exec.Cmd {
 func injectEnvs(cmd *exec.Cmd) {
 	cmd.Env = os.Environ()
 
-	envs, err := godotenv.Read()
-	if err == nil && helpers.Config.Features.InjEnvs {
-		for k, v := range envs {
-			cmd.Env = append(cmd.Env, k+"="+v)
+	if config.Global.Watch.InjectEnvs != "" {
+		envs, err := godotenv.Read(config.Global.Watch.InjectEnvs)
+		if err == nil {
+			for k, v := range envs {
+				cmd.Env = append(cmd.Env, k+"="+v)
+			}
+			helpers.Logf(helpers.Green + "✅ Injecting .env file" + helpers.Reset)
 		}
-		helpers.Logf(helpers.Green + "✅ Injecting .env file" + helpers.Reset)
 	}
 }
 
 // logic for generating all the code before executing the command
 func generateCode() {
 	funcs := []func(){}
-	if helpers.Config.Features.GenRouter {
+	if config.Global.Gen.Router {
 		funcs = append(funcs, router.GenerateRouter)
 	}
-	if helpers.Config.Features.GenEnvs {
+	if config.Global.Gen.Envs {
 		funcs = append(funcs, envs.GenerateEnvs)
 	}
 

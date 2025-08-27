@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/sh-lucas/mug/internal/helpers"
+	"github.com/sh-lucas/mug/internal/config"
 	"github.com/sh-lucas/mug/internal/watcher"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 			cmd := getBuildCmd()
 
 			generateCode()
-			if helpers.Config.Features.AutoTidy {
+			if config.Global.Watch.Tidy {
 				_ = exec.Command("go", "mod", "tidy").Run()
 			}
 
@@ -65,7 +65,7 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Dump default settings; empty variables will get defaults too.",
 	Run: func(cmd *cobra.Command, args []string) {
-		helpers.DumpConfig()
+		config.DumpConfig()
 	},
 }
 
