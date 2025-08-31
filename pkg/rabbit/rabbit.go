@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sh-lucas/mug/pkg"
 )
@@ -92,13 +93,19 @@ func connKeeper() (crash bool) {
 
 var channels = make(chan *amqp.Channel, 50)
 
-func Send() (ok bool) {
+func Send(queue string, payload any) (ok bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("Recovered in Send():", r)
 			ok = false
 		}
 	}()
+
+	body, err := jsoniter.Marshal(payload)
+	if err != nil {
+		log.Println("Failed to marshal payload:", err)
+		return false
+	}
 
 	if runningInTest {
 		log.Println("Test mode: Message not sent to RabbitMQ. Returning false from Send().")
@@ -109,18 +116,18 @@ func Send() (ok bool) {
 	case chann := <-channels:
 		// gets a chann from the pool, verifies if it's still open
 		if chann != nil && !chann.IsClosed() {
-			ok = publish(chann, "hello", "Hello World!")
+			ok = publish(chann, queue, body)
 		} else {
 			// reconnects if not
 			if chann != nil {
 				chann.Close()
 			}
 			chann = newChan()
-			ok = publish(chann, "hello", "Hello World!")
+			ok = publish(chann, queue, body)
 		}
 	default:
 		chann := newChan()
-		ok = publish(chann, "hello", "Hello World!")
+		ok = publish(chann, queue, body)
 	}
 
 	return ok
@@ -128,7 +135,7 @@ func Send() (ok bool) {
 
 // publish automatically returns the channel to the pool after publishing the message
 // it returns false to any error, including a perfectly timed closed channel.
-func publish(ch *amqp.Channel, queueName, body string) (ok bool) {
+func publish(ch *amqp.Channel, queueName string, body []byte) (ok bool) {
 	if ch.IsClosed() {
 		ch = newChan()
 	}
@@ -147,7 +154,7 @@ func publish(ch *amqp.Channel, queueName, body string) (ok bool) {
 		false,     // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(body),
+			Body:        body,
 		},
 	)
 	if err == nil && confirm.Wait() {
