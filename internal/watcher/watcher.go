@@ -13,6 +13,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sh-lucas/mug/internal/helpers"
+	"github.com/sh-lucas/mug/pkg"
 )
 
 type Task func() *exec.Cmd
@@ -115,7 +116,7 @@ func waiter(task Task) {
 				timer.Reset(debouceTime)
 			case <-timer.C:
 				Kill()
-				fmt.Println(helpers.Blue + "> Rebuilding application" + helpers.Reset)
+				fmt.Println(pkg.Blue + "> Rebuilding application" + pkg.Reset)
 				running = task()
 				clearChan(Signals)
 				break debounceLoop

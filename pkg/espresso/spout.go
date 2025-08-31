@@ -14,7 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sh-lucas/mug/internal/helpers"
+	"github.com/sh-lucas/mug/pkg"
 )
 
 type kegHandler[T any, U any] func(input T) (code int, body U)
@@ -58,7 +58,7 @@ func MakeHandler[T any, U any](
 		// guarantees valid response
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf(helpers.Red+"panic: %v\n"+helpers.Reset, r)
+				fmt.Printf(pkg.Red+"panic: %v\n"+pkg.Reset, r)
 				http.Error(w, internalErrorMsg, 500)
 				return
 			}

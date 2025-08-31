@@ -1,4 +1,4 @@
-package helpers
+package pkg
 
 var (
 	Reset      = "\033[0m"

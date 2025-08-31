@@ -13,6 +13,7 @@ import (
 	"github.com/sh-lucas/mug/internal/config"
 	"github.com/sh-lucas/mug/internal/generator"
 	"github.com/sh-lucas/mug/internal/helpers"
+	"github.com/sh-lucas/mug/pkg"
 )
 
 //go:embed router.go.tmpl
@@ -32,7 +33,7 @@ func GenerateRouter() {
 	}
 	if len(decls) == 0 {
 		if config.Global.Debug {
-			helpers.Logf(helpers.Yellow + "⚠️  No handlers found. Skipping router generation." + helpers.Reset)
+			helpers.Logf(pkg.Yellow + "⚠️  No handlers found. Skipping router generation." + pkg.Reset)
 		}
 		return
 	}
