@@ -10,6 +10,7 @@ import (
 	"github.com/sh-lucas/mug/internal/generator/envs"
 	"github.com/sh-lucas/mug/internal/generator/router"
 	"github.com/sh-lucas/mug/internal/helpers"
+	"github.com/sh-lucas/mug/pkg"
 )
 
 // returns the basic build cmd to run the application.
@@ -33,7 +34,7 @@ func injectEnvs(cmd *exec.Cmd) {
 			for k, v := range envs {
 				cmd.Env = append(cmd.Env, k+"="+v)
 			}
-			helpers.Logf(helpers.Green + "✅ Injecting .env file" + helpers.Reset)
+			helpers.Logf(pkg.Green + "✅ Injecting .env file" + pkg.Reset)
 		}
 	}
 }
