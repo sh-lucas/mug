@@ -1,5 +1,11 @@
 package user
 
+import (
+	"net/http"
+
+	"github.com/sh-lucas/mug/pkg/rabbit"
+)
+
 // testing struct desserialization
 type CreateUserInput struct {
 	Username string `json:"username" validate:"required,min=6"`
@@ -24,5 +30,20 @@ func CreateUser(input CreateUserInput) (code int, body returnType) {
 	return 200, returnType{
 		Error:   "Authorization error",
 		Message: "User could not be created.",
+	}
+}
+
+type Message struct {
+	Text string `json:"text"`
+}
+
+// mug:handler POST /rabbit
+// > CoolMiddleware
+func PublishToRabbit(message Message) (code int, body any) {
+
+	rabbit.Send("test", message)
+
+	return http.StatusAccepted, map[string]string{
+		"message": "ok",
 	}
 }

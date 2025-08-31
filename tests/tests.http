@@ -13,3 +13,12 @@ Content-Type: application/json
 {
   "username": "Luke"
 }
+
+
+### Testing rabbitmq publishing
+POST http://localhost:8080/rabbit
+Content-Type: application/json
+
+{
+  "text": "Hello, RabbitMQ!"
+}

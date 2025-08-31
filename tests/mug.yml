@@ -8,5 +8,5 @@ watch:
   delay: 300
 
 gen:
-  router: false
-  envs: false
+  router: true
+  envs: true

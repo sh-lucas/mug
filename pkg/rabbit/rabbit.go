@@ -94,12 +94,12 @@ func connKeeper() (crash bool) {
 var channels = make(chan *amqp.Channel, 50)
 
 func Send(queue string, payload any) (ok bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in Send():", r)
-			ok = false
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		log.Println("Recovered in Send():", r)
+	// 		ok = false
+	// 	}
+	// }()
 
 	body, err := jsoniter.Marshal(payload)
 	if err != nil {
@@ -139,7 +139,7 @@ func publish(ch *amqp.Channel, queueName string, body []byte) (ok bool) {
 	if ch.IsClosed() {
 		ch = newChan()
 	}
-	log.Println("Publishing message to RabbitMQ:", body)
+	log.Println("Publishing message to RabbitMQ:", string(body))
 
 	// sends the payload and stuff
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -157,7 +157,7 @@ func publish(ch *amqp.Channel, queueName string, body []byte) (ok bool) {
 			Body:        body,
 		},
 	)
-	if err == nil && confirm.Wait() {
+	if err == nil && confirm != nil && confirm.Wait() {
 		// channel still alive <3
 		select {
 		case channels <- ch:
@@ -166,7 +166,7 @@ func publish(ch *amqp.Channel, queueName string, body []byte) (ok bool) {
 		}
 		return true
 	} else {
-		log.Printf("Failed to publish message, channel closed? error: %v", err)
+		log.Printf("Failed to publish message, confirm=%v, error: %v", confirm, err)
 		return false
 	}
 }
@@ -188,6 +188,16 @@ func newChan() (ch *amqp.Channel) {
 		if err != nil {
 			time.Sleep(200 * time.Millisecond)
 		}
+
+		// set up confirm mode
+		err = ch.Confirm(false)
+		if err != nil {
+			log.Printf("Failed to enable confirm mode: %v", err)
+			ch.Close()
+			time.Sleep(200 * time.Millisecond)
+			continue // recreates the channel if something goes wrong
+		}
+
 	}
 
 	// listen for channel close events
