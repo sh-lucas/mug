@@ -94,12 +94,12 @@ func connKeeper() (crash bool) {
 var channels = make(chan *amqp.Channel, 50)
 
 func Send(queue string, payload any) (ok bool) {
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		log.Println("Recovered in Send():", r)
-	// 		ok = false
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in Send():", r)
+			ok = false
+		}
+	}()
 
 	body, err := jsoniter.Marshal(payload)
 	if err != nil {
@@ -197,11 +197,11 @@ func newChan() (ch *amqp.Channel) {
 			time.Sleep(200 * time.Millisecond)
 			continue // recreates the channel if something goes wrong
 		}
-
 	}
 
 	// listen for channel close events
 	go func(c *amqp.Channel) {
+		// needs a recover if chann turns nil
 		defer func() {
 			if r := recover(); r != nil {
 				log.Println("Recovered in channel close listener:", r)
