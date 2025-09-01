@@ -18,6 +18,13 @@ var runningInTest bool
 var rabbitUri string
 
 func init() {
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		startupConnect()
+	}()
+}
+
+func startupConnect() {
 	if flag.Lookup("test.v") != nil {
 		runningInTest = true
 	}
