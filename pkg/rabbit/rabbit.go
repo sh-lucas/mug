@@ -216,4 +216,114 @@ func newChan() (ch *amqp.Channel) {
 	return ch
 }
 
-// func Subscribe() {}
+// Subscribe starts a pool of workers to process messages from the specified queue.
+func Subscribe(queueName string, maxWorkers int, handler func(amqp.Delivery)) {
+	if runningInTest {
+		log.Printf("Test mode: WorkOnPool for queue '%s' not started", queueName)
+		return
+	}
+
+	// limits the number of concurrent workers
+	workerSem := make(chan struct{}, maxWorkers)
+
+	log.Printf("Starting worker pool for queue '%s' with max %d workers", queueName, maxWorkers)
+
+	// controls the spawn of workers
+	go func() {
+		for {
+			workerSem <- struct{}{}
+			go processWorker(queueName, workerSem, handler)
+			time.Sleep(200 * time.Millisecond) // avoids hammering
+		}
+	}()
+}
+
+func processWorker(queueName string, workerSem <-chan struct{}, handler func(amqp.Delivery)) {
+	defer func() { <-workerSem }() // release the semaphore when done
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Worker recovered from panic: %v", r)
+		}
+	}()
+
+	// owns it's own channel
+	ch := newWorkerChannel()
+	if ch == nil {
+		log.Printf("Failed to create worker channel, exiting...")
+		time.Sleep(2 * time.Second)
+		return
+	}
+	defer ch.Close()
+
+	_, err := ch.QueueDeclare(queueName, true, false, false, false, nil)
+	if err != nil {
+		log.Printf("Failed to declare queue '%s': %v", queueName, err)
+		time.Sleep(2 * time.Second)
+		return
+	}
+
+	// starts consuming with prefetch 5
+	err = ch.Qos(5, 0, false)
+	if err != nil {
+		log.Printf("Failed to set QoS: %v", err)
+		time.Sleep(2 * time.Second)
+		return
+	}
+
+	// Consume
+	msgs, err := ch.Consume(queueName, "", false, false, false, false, nil)
+	if err != nil {
+		log.Printf("Failed to consume: %v", err)
+		time.Sleep(2 * time.Second)
+		return
+	}
+
+	log.Printf("Worker started consuming from '%s'", queueName)
+
+	// Processa mensagens
+	for msg := range msgs {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("Handler panic: %v", r)
+					msg.Nack(false, true)
+				}
+			}()
+
+			handler(msg)
+		}()
+	}
+
+	log.Printf("Worker channel closed, will restart in 2s...")
+	time.Sleep(2 * time.Second)
+}
+
+func newWorkerChannel() *amqp.Channel {
+	for i := 0; i < 50; i++ { // Max 50 tentativas
+		conn.m.RLock()
+		connection := conn.connection
+		conn.m.RUnlock()
+
+		if connection == nil || connection.IsClosed() {
+			backoff := time.Duration(i+1) * 200 * time.Millisecond
+			if backoff > 5*time.Second {
+				backoff = 5 * time.Second
+			}
+			time.Sleep(backoff)
+			continue
+		}
+
+		ch, err := connection.Channel()
+		if err != nil {
+			backoff := time.Duration(i+1) * 200 * time.Millisecond
+			if backoff > 5*time.Second {
+				backoff = 5 * time.Second
+			}
+			time.Sleep(backoff)
+			continue
+		}
+
+		return ch
+	}
+	return nil
+}
