@@ -234,6 +234,55 @@ func newChan() (ch *amqp.Channel) {
 	return ch
 }
 
+// Ping checks if the RabbitMQ connection is alive by creating a temporary channel
+// and attempting to declare a queue. Returns true if the connection is healthy.
+func Ping() bool {
+	if runningInTest {
+		log.Println("Test mode: Ping returning true (not actually checking RabbitMQ)")
+		return true
+	}
+
+	conn.m.RLock()
+	connection := conn.connection
+	conn.m.RUnlock()
+
+	if connection == nil || connection.IsClosed() {
+		return false
+	}
+
+	// Create a temporary channel to test the connection
+	ch, err := connection.Channel()
+	if err != nil {
+		return false
+	}
+	defer ch.Close()
+
+	// Try to declare a temporary queue to verify the connection is working
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Use a goroutine to respect the context timeout
+	done := make(chan bool, 1)
+	go func() {
+		_, err := ch.QueueDeclare(
+			"ping-test-"+fmt.Sprintf("%d", time.Now().UnixNano()), // unique queue name
+			false, // durable
+			true,  // delete when unused
+			true,  // exclusive
+			false, // no-wait
+			nil,   // arguments
+		)
+		done <- (err == nil)
+	}()
+
+	select {
+	case result := <-done:
+		return result
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // Subscribe starts a pool of workers to process messages from the specified queue.
 func Subscribe(queueName string, maxWorkers int, handler func(amqp.Delivery)) {
 	if runningInTest {
