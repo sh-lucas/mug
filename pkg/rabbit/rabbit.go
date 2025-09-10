@@ -17,14 +17,25 @@ import (
 var runningInTest bool
 var rabbitUri string
 
+var timeout = 30 * time.Second
+
 func init() {
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		startupConnect()
-	}()
+	timeoutStr := os.Getenv("RABBIT_TIMEOUT") // timeout for sending messages
+	if timeoutStr != "" {
+		t, err := time.ParseDuration(timeoutStr)
+		if err != nil {
+			panic("RABBIT_TIMEOUT environment variable is set but invalid: " + err.Error())
+		} else {
+			timeout = t
+		}
+	}
+
+	go startup()
 }
 
-func startupConnect() {
+func startup() {
+	time.Sleep(100 * time.Millisecond)
+
 	if flag.Lookup("test.v") != nil {
 		runningInTest = true
 	}
@@ -40,7 +51,7 @@ func startupConnect() {
 
 	go func() {
 		for connKeeper() {
-			log.Println("Restarting connection keeper...")
+			log.Println("Panic catched, restarting connection keeper...")
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -149,7 +160,7 @@ func publish(ch *amqp.Channel, queueName string, body []byte) (ok bool) {
 	log.Println("Publishing message to RabbitMQ:", string(body))
 
 	// sends the payload and stuff
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// Enable publisher confirms on the channel
@@ -247,7 +258,7 @@ func Subscribe(queueName string, maxWorkers int, handler func(amqp.Delivery)) {
 
 func processWorker(queueName string, workerSem <-chan struct{}, handler func(amqp.Delivery)) {
 	defer func() { <-workerSem }() // release the semaphore when done
-	defer func() {
+	defer func() {                 // recovers from panics just to be sure
 		if r := recover(); r != nil {
 			log.Printf("Worker recovered from panic: %v", r)
 		}
@@ -293,7 +304,7 @@ func processWorker(queueName string, workerSem <-chan struct{}, handler func(amq
 			defer func() {
 				if r := recover(); r != nil {
 					log.Printf("Handler panic: %v", r)
-					msg.Nack(false, true)
+					msg.Nack(false, false) // nacks so it doesn't crash again
 				}
 			}()
 
