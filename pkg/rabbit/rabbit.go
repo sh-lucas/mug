@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,12 +14,24 @@ import (
 	"github.com/sh-lucas/mug/pkg"
 )
 
-var runningInTest bool
 var rabbitUri string
-
 var timeout = 30 * time.Second
+var runningInTest bool
+
+func detectRunningInTest() bool {
+	if strings.HasSuffix(os.Args[0], ".test") {
+		return true
+	}
+	for _, a := range os.Args[1:] {
+		if strings.HasPrefix(a, "-test.") {
+			return true
+		}
+	}
+	return false
+}
 
 func init() {
+	runningInTest = detectRunningInTest()
 	go startup()
 }
 
