@@ -20,6 +20,18 @@ var rabbitUri string
 var timeout = 30 * time.Second
 
 func init() {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
+	go startup()
+}
+
+func startup() {
+	// awaits a little for envs and stuff like that =)
+	time.Sleep(100 * time.Millisecond)
+
+	// setup timeout from env var
 	timeoutStr := os.Getenv("RABBIT_TIMEOUT") // timeout for sending messages
 	if timeoutStr != "" {
 		t, err := time.ParseDuration(timeoutStr)
@@ -29,12 +41,6 @@ func init() {
 			timeout = t
 		}
 	}
-
-	go startup()
-}
-
-func startup() {
-	time.Sleep(100 * time.Millisecond)
 
 	if flag.Lookup("test.v") != nil {
 		runningInTest = true
