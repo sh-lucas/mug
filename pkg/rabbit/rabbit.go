@@ -37,7 +37,7 @@ func init() {
 
 func startup() {
 	// awaits a little for envs and stuff like that =)
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	// setup timeout from env var
 	timeoutStr := os.Getenv("RABBIT_TIMEOUT") // timeout for sending messages
@@ -50,12 +50,9 @@ func startup() {
 		}
 	}
 
-	// if flag.Lookup("test.v") != nil {
-	// 	fmt.Println("Running in test mode. Messages will --- be sent to RabbitMQ.")
-	// 	// runningInTest = true
-	// 	return
-	// }
-	// rabbitUri = os.Getenv("RABBIT_URI")
+	if runningInTest {
+		return
+	}
 
 	if rabbitUri == "" {
 		log.Println(pkg.BoldRed + "You need to set the RABBIT_URI environment variable" + pkg.Reset)
