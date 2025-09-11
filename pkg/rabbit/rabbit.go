@@ -20,11 +20,6 @@ var rabbitUri string
 var timeout = 30 * time.Second
 
 func init() {
-	// Don't parse flags if we're running tests
-	if flag.Lookup("test.v") == nil && flag.Lookup("test.run") == nil {
-		runningInTest = true
-	}
-
 	go startup()
 }
 
@@ -44,14 +39,11 @@ func startup() {
 	}
 
 	if flag.Lookup("test.v") != nil {
-		runningInTest = true
-	}
-	rabbitUri = os.Getenv("RABBIT_URI")
-
-	if runningInTest {
-		fmt.Println("Running in test mode. Messages will not be sent to RabbitMQ.")
+		fmt.Println("Running in test mode. Messages will --- be sent to RabbitMQ.")
+		// runningInTest = true
 		return
 	}
+	rabbitUri = os.Getenv("RABBIT_URI")
 
 	if rabbitUri == "" {
 		log.Fatalln(pkg.BoldRed + "You need to set the RABBIT_URI environment variable" + pkg.Reset)
