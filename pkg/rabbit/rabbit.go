@@ -2,7 +2,6 @@ package rabbit
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -38,15 +37,15 @@ func startup() {
 		}
 	}
 
-	if flag.Lookup("test.v") != nil {
-		fmt.Println("Running in test mode. Messages will --- be sent to RabbitMQ.")
-		// runningInTest = true
-		return
-	}
-	rabbitUri = os.Getenv("RABBIT_URI")
+	// if flag.Lookup("test.v") != nil {
+	// 	fmt.Println("Running in test mode. Messages will --- be sent to RabbitMQ.")
+	// 	// runningInTest = true
+	// 	return
+	// }
+	// rabbitUri = os.Getenv("RABBIT_URI")
 
 	if rabbitUri == "" {
-		log.Fatalln(pkg.BoldRed + "You need to set the RABBIT_URI environment variable" + pkg.Reset)
+		log.Println(pkg.BoldRed + "You need to set the RABBIT_URI environment variable" + pkg.Reset)
 	}
 
 	go func() {
