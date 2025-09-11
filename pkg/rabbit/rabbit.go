@@ -54,6 +54,7 @@ func startup() {
 		return
 	}
 
+	rabbitUri = os.Getenv("RABBIT_URI")
 	if rabbitUri == "" {
 		log.Println(pkg.BoldRed + "You need to set the RABBIT_URI environment variable" + pkg.Reset)
 	}
