@@ -126,8 +126,8 @@ func Send(queue string, payload any) (ok bool) {
 	}
 
 	if runningInTest {
-		log.Println("Test mode: Message not sent to RabbitMQ. Returning false from Send().")
-		return false
+		log.Println("Test mode: Message not sent to RabbitMQ. Returning true from Send().")
+		return true
 	}
 
 	select {
