@@ -3,7 +3,7 @@ package user
 import (
 	"net/http"
 
-	"github.com/sh-lucas/mug/pkg/rabbit"
+	"github.com/sh-lucas/mug/pkg/mug"
 )
 
 // testing struct desserialization
@@ -35,13 +35,14 @@ func CreateUser(input CreateUserInput) (code int, body returnType) {
 
 type Message struct {
 	Text string `json:"text"`
+	mug.ShortBrew[any]
 }
 
 // mug:handler POST /rabbit
 // > CoolMiddleware
 func PublishToRabbit(message Message) (code int, body any) {
 
-	rabbit.Send("test", message)
+	// rabbit.Send("test", message)
 
 	return http.StatusAccepted, map[string]string{
 		"message": "ok",

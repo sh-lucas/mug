@@ -15,6 +15,7 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sh-lucas/mug/pkg"
+	"github.com/sh-lucas/mug/pkg/mug"
 )
 
 type kegHandler[T any, U any] func(input T) (code int, body U)
@@ -55,7 +56,7 @@ func MakeHandler[T any, U any](
 	chained := chain(middlewares, ConvertHandler(handler))
 
 	r.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		// guarantees valid response
+		// crash recovery
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Printf(pkg.Red+"panic: %v\n"+pkg.Reset, r)
@@ -63,7 +64,6 @@ func MakeHandler[T any, U any](
 				return
 			}
 		}()
-
 		chained.ServeHTTP(w, r)
 	})
 }
@@ -93,14 +93,23 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		// unmarshal into T and check if something is missing.
 		// errors are ignored because of the validation that do it's job.
 		var payload T
-		_ = jsoniter.NewDecoder(r.Body).Decode(&payload)
+		_ = jsoniter.NewDecoder(r.Body).Decode(&payload) // error is ignored
 
 		err := validate.Struct(&payload)
 		if err != nil {
 			errMsg := formatValidationErrors(err, translator)
-			w.WriteHeader(400)
-			w.Write(errMsg)
+			http.Error(w, string(errMsg), http.StatusBadRequest)
 			return
+		}
+
+		// if it is muggable, pour it!
+		if m, ok := any(&payload).(mug.Muggable); ok {
+			err := m.Pour(w, r)
+			if err != nil {
+				log.Println("Error pouring mug:", err)
+				http.Error(w, fmt.Sprintf(`{ "error": "%s" }`, err.Error()), http.StatusBadRequest)
+				return
+			}
 		}
 
 		code, body := handler(payload)
@@ -109,12 +118,14 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		err = jsoniter.NewEncoder(w).Encode(body)
 		if err != nil {
 			log.Println("Unsmarshable content returned from handler!")
-			http.Error(w, internalErrorMsg, 500)
+			http.Error(w, internalErrorMsg, http.StatusInternalServerError)
 			return
 		}
 	})
 }
 
+// formats validation errors as json and marshals it
+// so your api is easy to consume.
 func formatValidationErrors(err error, trans ut.Translator) []byte {
 
 	response := make(map[string]string)
