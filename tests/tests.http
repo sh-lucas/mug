@@ -17,7 +17,7 @@ Content-Type: application/json
 
 ### Testing rabbitmq publishing
 POST http://localhost:8080/rabbit
-Authorization: Bearer mysecrettoken
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.9D4H_3ypCSrn2OkCso22chuSN4lm5qxWee6DEccbAcs
 Content-Type: application/json
 
 {

@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sh-lucas/mug/pkg/mug"
 )
 
@@ -35,7 +37,12 @@ func CreateUser(input CreateUserInput) (code int, body returnType) {
 
 type Message struct {
 	Text string `json:"text"`
-	mug.ShortBrew[any]
+	// request short brewed.
+	// Embeded struct is authorization token format
+	mug.ShortBrew[struct {
+		Name                 string `json:"name"`
+		jwt.RegisteredClaims        // defaults
+	}]
 }
 
 // mug:handler POST /rabbit
@@ -44,7 +51,11 @@ func PublishToRabbit(message Message) (code int, body any) {
 
 	// rabbit.Send("test", message)
 
-	return http.StatusAccepted, map[string]string{
+	return http.StatusAccepted, mug.M{
 		"message": "ok",
+		"greeting": fmt.Sprintf(
+			"Hello, %s! Your message '%s' has been sent to the rabbit queue.",
+			message.Auth.Name, message.Text,
+		),
 	}
 }

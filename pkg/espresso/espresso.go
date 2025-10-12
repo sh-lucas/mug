@@ -95,6 +95,16 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		var payload T
 		_ = jsoniter.NewDecoder(r.Body).Decode(&payload) // error is ignored
 
+		// if it is muggable, pour it!
+		// responsible for auth, unmarshalling, etc.
+		if m, ok := any(&payload).(mug.Muggable); ok {
+			ok := m.Pour(w, r)
+			if !ok {
+				return
+			}
+		}
+
+		// validation happens after pouring =)
 		err := validate.Struct(&payload)
 		if err != nil {
 			errMsg := formatValidationErrors(err, translator)
@@ -102,19 +112,10 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 			return
 		}
 
-		// if it is muggable, pour it!
-		if m, ok := any(&payload).(mug.Muggable); ok {
-			err := m.Pour(w, r)
-			if err != nil {
-				log.Println("Error pouring mug:", err)
-				http.Error(w, fmt.Sprintf(`{ "error": "%s" }`, err.Error()), http.StatusBadRequest)
-				return
-			}
-		}
-
 		code, body := handler(payload)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(code)
+		// marshal response
 		err = jsoniter.NewEncoder(w).Encode(body)
 		if err != nil {
 			log.Println("Unsmarshable content returned from handler!")
