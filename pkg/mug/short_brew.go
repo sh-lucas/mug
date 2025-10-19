@@ -4,49 +4,39 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	jsoniter "github.com/json-iterator/go"
 )
 
-var missingTokenPayload = `{
-	"error": "missing token",
-	"message": "An Authorization header with a Bearer token is required to access this resource."
-}`
-var tokenExpiredPayload = `{
-	"error": "token expired",
-	"message": "The provided token has expired. Please authenticate again to obtain a new token."
-}`
-var invalidTokenPayload = `{
-	"error": "invalid token",
-	"message": "%s"
-}`
-
-var JWT_TOKEN_SECRET = (os.Getenv("JWT_TOKEN_SECRET"))
-
 // simple and straightforward, just like a good cup of coffee.
 // pass along the basic stuff from request using
-type ShortBrew[AuthT any] struct {
+type ShortBrew[BodyT any, AuthT jwt.Claims] struct {
 	Writer  http.ResponseWriter `json:"-" bson:"-"`
 	Request *http.Request       `json:"-" bson:"-"`
 	Auth    AuthT               `json:"-" bson:"-"`
+	Body    BodyT               `json:"-" bson:"-"`
 }
 
-func (payload *ShortBrew[AuthT]) Pour(w http.ResponseWriter, r *http.Request) bool {
+func (payload *ShortBrew[BodyT, AuthT]) Pour(w http.ResponseWriter, r *http.Request) bool {
 	payload.Writer = w
 	payload.Request = r
 
 	// body unmarshalling into struct for convenience =)
-	_ = jsoniter.NewDecoder(r.Body).Decode(payload)
+	err := jsoniter.NewDecoder(r.Body).Decode(&((*payload).Body))
+	if err != nil {
+		fmt.Println("Error decoding body:", err)
+	}
 
-	// verifies if the Brew expects jwt claims
-	claims, ok := any(&payload.Auth).(jwt.Claims)
-	if !ok {
-		// ignores because the handler is not expecting jwt claims
+	// Public implements jwt.Claims, but here we ignore auth for it
+	_, isPublic := any(&payload.Auth).(Public)
+	if isPublic {
 		return true
 	}
+
+	// by type definition, AuthT must implement jwt.Claims =)
+	claims, _ := any(&payload.Auth).(jwt.Claims)
 
 	// AuthT parsing
 	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -59,7 +49,7 @@ func (payload *ShortBrew[AuthT]) Pour(w http.ResponseWriter, r *http.Request) bo
 	var auth AuthT
 	payload.Auth = auth
 
-	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+	_, err = jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(JWT_TOKEN_SECRET), nil
 	})
 

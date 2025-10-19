@@ -35,27 +35,28 @@ func CreateUser(input CreateUserInput) (code int, body returnType) {
 	}
 }
 
-type Message struct {
+// input type ALIAS, notice the = sign
+type PublishInput = mug.ShortBrew[PublishBody, PublishAuth]
+type PublishBody struct {
 	Text string `json:"text"`
-	// request short brewed.
-	// Embeded struct is authorization token format
-	mug.ShortBrew[struct {
-		Name                 string `json:"name"`
-		jwt.RegisteredClaims        // defaults
-	}]
+}
+type PublishAuth struct {
+	Name string `json:"name"`
+	jwt.RegisteredClaims
 }
 
 // mug:handler POST /rabbit
 // > CoolMiddleware
-func PublishToRabbit(message Message) (code int, body any) {
+func PublishToRabbit(ctx PublishInput) (code int, body any) {
 
-	// rabbit.Send("test", message)
+	// need this to be valid on compile time =)
+	// var A mug.Muggable = mug.Muggable(&ctx)
 
 	return http.StatusAccepted, mug.M{
 		"message": "ok",
 		"greeting": fmt.Sprintf(
 			"Hello, %s! Your message '%s' has been sent to the rabbit queue.",
-			message.Auth.Name, message.Text,
+			ctx.Auth.Name, ctx.Body.Text,
 		),
 	}
 }

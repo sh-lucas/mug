@@ -93,7 +93,6 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		// unmarshal into T and check if something is missing.
 		// errors are ignored because of the validation that do it's job.
 		var payload T
-		_ = jsoniter.NewDecoder(r.Body).Decode(&payload) // error is ignored
 
 		// if it is muggable, pour it!
 		// responsible for auth, unmarshalling, etc.
@@ -102,6 +101,9 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 			if !ok {
 				return
 			}
+		} else {
+			// if not muggable, simply try to unmarshal the body
+			_ = jsoniter.NewDecoder(r.Body).Decode(&payload)
 		}
 
 		// validation happens after pouring =)
