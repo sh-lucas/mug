@@ -26,6 +26,14 @@ var invalidTokenPayload = `{
 
 var JWT_TOKEN_SECRET = (os.Getenv("JWT_TOKEN_SECRET"))
 
+// simple and straightforward, just like a good cup of coffee.
+// pass along the basic stuff from request using
+type ShortBrew[AuthT any] struct {
+	Writer  http.ResponseWriter `json:"-" bson:"-"`
+	Request *http.Request       `json:"-" bson:"-"`
+	Auth    AuthT               `json:"-" bson:"-"`
+}
+
 func (payload *ShortBrew[AuthT]) Pour(w http.ResponseWriter, r *http.Request) bool {
 	payload.Writer = w
 	payload.Request = r
