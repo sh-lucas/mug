@@ -1,3 +1,7 @@
+GET http://localhost:8080/
+
+
+### simple struct pouring
 POST http://localhost:8080/user/register
 Content-Type: application/json
 
@@ -6,7 +10,7 @@ Content-Type: application/json
 }
 
 
-### username too short
+### simple struct pouring with validation error
 POST http://localhost:8080/user/register
 Content-Type: application/json
 
@@ -15,7 +19,7 @@ Content-Type: application/json
 }
 
 
-### Testing rabbitmq publishing
+### ShortBrew implementation and Pour() testing
 POST http://localhost:8080/rabbit
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.9D4H_3ypCSrn2OkCso22chuSN4lm5qxWee6DEccbAcs
 Content-Type: application/json
