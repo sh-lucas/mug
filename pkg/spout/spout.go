@@ -1,4 +1,4 @@
-package espresso
+package spout
 
 import (
 	"errors"

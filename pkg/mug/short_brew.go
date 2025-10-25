@@ -15,8 +15,8 @@ import (
 type ShortBrew[BodyT any, AuthT jwt.Claims] struct {
 	Writer  http.ResponseWriter `json:"-" bson:"-"`
 	Request *http.Request       `json:"-" bson:"-"`
-	Auth    AuthT               `json:"-" bson:"-"`
-	Body    BodyT               `json:"-" bson:"-"`
+	Auth    AuthT               `json:"authInfo" bson:"authInfo"`
+	Body    BodyT               `json:"requestBody" bson:"requestBody"`
 }
 
 func (payload *ShortBrew[BodyT, AuthT]) Pour(w http.ResponseWriter, r *http.Request) bool {
