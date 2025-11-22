@@ -195,7 +195,7 @@ func extractBodyType(t reflect.Type) reflect.Type {
 		field := t.Field(i)
 
 		// Check if this field is the Body from JsonBodyT (direct)
-		if field.Name == "Body" && field.Tag.Get("json") == "body" {
+		if field.Name == "Body" && (field.Tag.Get("json") == "body" || field.Tag.Get("json") == "requestBody") {
 			return field.Type
 		}
 

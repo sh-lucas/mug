@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/invopop/jsonschema"
 	"github.com/sh-lucas/mug/pkg/mug"
 )
@@ -35,6 +36,7 @@ func TestExtractBodyType(t *testing.T) {
 	}{
 		{"Named Struct", reflect.TypeOf(TestInput{})},
 		{"Anonymous Struct", reflect.TypeOf(TestInputAnonymous{})},
+		{"ShortBrew", reflect.TypeOf(mug.ShortBrew[TestBody, jwt.RegisteredClaims]{})},
 	}
 
 	for _, tt := range tests {
