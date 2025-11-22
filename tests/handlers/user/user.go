@@ -14,9 +14,9 @@ type CreateUserInput struct {
 }
 
 type returnType struct {
-	Error   string `json:"error,omitempty"`
 	Message string `json:"message"`
 	Role    string `json:"role,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
 // mug:handler POST /user/register
