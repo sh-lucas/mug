@@ -11,7 +11,13 @@ func Route(addr string) {
 	router := chi.NewRouter()
 	
 	// handlers:
-	{{.}}
+	{{.Handlers}}
+
+	{{if .Swagger}}
+	// Swagger docs
+	spout.ServeDocs(router)
+	fmt.Printf("\033[36mSwagger UI available at http://localhost:%s/docs\033[0m\n", addr)
+	{{end}}
 
 	fmt.Printf("\033[32mStarting server on :%s\033[0m\n", addr)
 	if err := http.ListenAndServe(":"+addr, router); err != nil {

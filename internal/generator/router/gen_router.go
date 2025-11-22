@@ -26,6 +26,11 @@ type HandlerDecl struct {
 	Path    string
 }
 
+type genData struct {
+	Handlers string
+	Swagger  bool
+}
+
 func GenerateRouter() {
 	decls, err := parseHandlersFolder()
 	if err != nil {
@@ -59,7 +64,12 @@ func GenerateRouter() {
 		}
 	}
 
-	err = generator.Generate(routerTemplate, content.String(), "router", "router.go")
+	data := genData{
+		Handlers: content.String(),
+		Swagger:  config.Global.Gen.Swagger,
+	}
+
+	err = generator.Generate(routerTemplate, data, "router", "router.go")
 	if err != nil {
 		panic(err)
 	}

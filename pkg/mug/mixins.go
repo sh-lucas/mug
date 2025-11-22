@@ -59,14 +59,19 @@ func (b *BearerAuthT[T]) Authenticate(w http.ResponseWriter, r *http.Request) bo
 	return true
 }
 
-// JsonBody mixin for JSON request body
-type JsonBody struct{}
-
 // Bodyable interface for structs that handle JSON body
 type Bodyable interface {
-	IsJsonBody() bool
+	GetBodyPtr() any
 }
 
-func (j JsonBody) IsJsonBody() bool {
-	return true
+// JsonBodyT mixin for JSON request body with type parameter
+type JsonBodyT[T any] struct {
+	Body T `json:"body"`
 }
+
+func (j *JsonBodyT[T]) GetBodyPtr() any {
+	return &j.Body
+}
+
+// JsonBody is deprecated - use JsonBodyT[YourBodyType] instead
+type JsonBody = JsonBodyT[map[string]any]

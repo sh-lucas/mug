@@ -19,8 +19,9 @@ func (e *Espresso) Pour(w http.ResponseWriter, r *http.Request, parent any) bool
 	e.C.Request = r
 
 	// Handle JSON Body
-	if _, ok := parent.(Bodyable); ok {
-		err := jsoniter.NewDecoder(r.Body).Decode(parent)
+	if bodyable, ok := parent.(Bodyable); ok {
+		bodyPtr := bodyable.GetBodyPtr()
+		err := jsoniter.NewDecoder(r.Body).Decode(bodyPtr)
 		if err != nil {
 			fmt.Println("Error decoding body:", err)
 		}

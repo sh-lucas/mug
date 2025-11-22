@@ -15,7 +15,7 @@ The advantage is that the .env file is automatically loaded and injected in the 
 ## Installing
 
 ```bash
-go install github.com/sh-lucas/mug@latest
+go install github.com/sh-lucas/mug/cmd/mug@latest
 ```
 
 

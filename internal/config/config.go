@@ -42,8 +42,9 @@ type config struct {
 		DelayMS    int    `yaml:"delay"`
 	} `yaml:"watch"`
 	Gen struct {
-		Router bool `yaml:"router"`
-		Envs   bool `yaml:"envs"`
+		Router  bool `yaml:"router"`
+		Envs    bool `yaml:"envs"`
+		Swagger bool `yaml:"swagger"`
 	} `yaml:"gen"`
 }
 

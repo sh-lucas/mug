@@ -60,3 +60,18 @@ func PublishToRabbit(ctx PublishInput) (code int, body any) {
 		),
 	}
 }
+
+type PourInput struct {
+	mug.JsonBodyT[struct {
+		Owner      string `json:"owner"`
+		CoffeeType string `json:"coffee_type"`
+	}]
+}
+
+// mug:handler GET /coffee
+func PourSomeCoffee(input PourInput) (code int, body any) {
+	return http.StatusOK, mug.M{
+		"message": "coffee ready!",
+		"owner":   input.Body.Owner,
+	}
+}

@@ -66,6 +66,22 @@ func MakeHandler[T any, U any](
 		}()
 		chained.ServeHTTP(w, r)
 	})
+
+	// Register for Swagger
+	parts := strings.SplitN(path, " ", 2)
+	method := "GET"
+	url := path
+	if len(parts) == 2 {
+		method = parts[0]
+		url = parts[1]
+	}
+
+	registry = append(registry, RouteSpec{
+		Method:     method,
+		Path:       url,
+		InputType:  reflect.TypeOf((*T)(nil)).Elem(),
+		OutputType: reflect.TypeOf((*U)(nil)).Elem(),
+	})
 }
 
 // chain chains middlewares before a finalHandler.
