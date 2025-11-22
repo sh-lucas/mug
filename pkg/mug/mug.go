@@ -11,7 +11,7 @@ type M map[string]any
 
 // Pour into a mug so your requests are always served hot! ☕️
 type Muggable interface {
-	Pour(w http.ResponseWriter, r *http.Request) (ok bool)
+	Pour(w http.ResponseWriter, r *http.Request, parent any) (ok bool)
 }
 
 // extends registeredClaims so you can't forget to

@@ -97,7 +97,7 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		// if it is muggable, pour it!
 		// responsible for auth, unmarshalling, etc.
 		if m, ok := any(&payload).(mug.Muggable); ok {
-			ok := m.Pour(w, r)
+			ok := m.Pour(w, r, &payload)
 			if !ok {
 				return
 			}

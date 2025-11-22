@@ -19,7 +19,7 @@ type ShortBrew[BodyT any, AuthT jwt.Claims] struct {
 	Body    BodyT               `json:"requestBody" bson:"requestBody"`
 }
 
-func (payload *ShortBrew[BodyT, AuthT]) Pour(w http.ResponseWriter, r *http.Request) bool {
+func (payload *ShortBrew[BodyT, AuthT]) Pour(w http.ResponseWriter, r *http.Request, parent any) bool {
 	payload.Writer = w
 	payload.Request = r
 
@@ -54,7 +54,7 @@ func (payload *ShortBrew[BodyT, AuthT]) Pour(w http.ResponseWriter, r *http.Requ
 	})
 
 	if errors.Is(err, jwt.ErrTokenExpired) {
-		http.Error(w, tokenExpiredPayload, http.StatusUnauthorized)
+		http.Error(w, tokenExpiredPayload, http.StatusForbidden)
 		return false
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf(invalidTokenPayload, err.Error()), http.StatusUnauthorized)
