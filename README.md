@@ -22,10 +22,9 @@ go install github.com/sh-lucas/mug/cmd/mug@latest
 ## Why "mug"?
 
 The name?   
-> Because I like coffee.
+> Because it's a cool name.
 
-Firstly, because I wanted. Secondly, I also want to have a personalized golang experience.    
-This project intends to be bigger one day, having more useful tools under a single command.   
+Currently it's still just a toy project, but it works.  
 
 
 ## TODOS:
@@ -33,6 +32,6 @@ This project intends to be bigger one day, having more useful tools under a sing
 - Export default Debounce, Throttle, and stuff.
 - Export a default Rabbit, Mongo and SQL wrappers.
 - Using httpRouter, faster json, and dependency injection.
-- Maybe running docker composes in the way.  
+- Maybe running docker composes in the way with mug.  
 - Test suites.    
 - `mug build` for cool dockerization.   
