@@ -66,6 +66,10 @@ type PourInput struct {
 		Owner      string `json:"owner"`
 		CoffeeType string `json:"coffee_type"`
 	}]
+	// mug.BearerAuthT[struct {
+	// 	Name string `json:"name"`
+	// 	jwt.RegisteredClaims
+	// }]
 }
 
 // mug:handler GET /coffee
