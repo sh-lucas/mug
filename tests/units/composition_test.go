@@ -13,16 +13,17 @@ import (
 
 type TestPayload struct {
 	mug.Espresso
-	mug.BearerAuth
-	mug.JsonBody
-	Data string `json:"data"`
+	mug.Auth
+	mug.JsonBody[struct {
+		Data string `json:"data"`
+	}]
 }
 
 func TestComposition(t *testing.T) {
 	// Setup
 	mug.JWT_TOKEN_SECRET = "secret"
 	handler := func(input TestPayload) (int, any) {
-		if input.Data != "test" {
+		if input.Body.Data != "test" {
 			return 500, "body not decoded"
 		}
 		if input.Claims.Subject != "user123" {

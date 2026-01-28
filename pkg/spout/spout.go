@@ -110,15 +110,22 @@ func ConvertHandler[T any, U any](handler kegHandler[T, U]) http.Handler {
 		// errors are ignored because of the validation that do it's job.
 		var payload T
 
-		// if it is muggable, pour it!
-		// responsible for auth, unmarshalling, etc.
-		if m, ok := any(&payload).(mug.Muggable); ok {
-			ok := m.Pour(w, r, &payload)
-			if !ok {
+		// Check for Authable interface (handles authentication)
+		if auth, ok := any(&payload).(mug.Authable); ok {
+			if !auth.Authenticate(w, r) {
 				return
 			}
+		}
+
+		// Check for Bodyable interface (handles custom body parsing)
+		if bodyRouter, ok := any(&payload).(mug.Bodyable); ok {
+			// Decodes body into the struct pointer returned by GetBodyPtr()
+			if err := jsoniter.NewDecoder(r.Body).Decode(bodyRouter.GetBodyPtr()); err != nil {
+				// We don't error out here immediately, let validation handle it
+				// or maybe the body was optional/empty
+			}
 		} else {
-			// if not muggable, simply try to unmarshal the body
+			// fallback to support single structs
 			_ = jsoniter.NewDecoder(r.Body).Decode(&payload)
 		}
 

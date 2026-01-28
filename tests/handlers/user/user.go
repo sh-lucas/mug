@@ -35,11 +35,16 @@ func CreateUser(input CreateUserInput) (code int, body returnType) {
 	}
 }
 
-// input type ALIAS, notice the = sign
-type PublishInput = mug.ShortBrew[PublishBody, PublishAuth]
+// input type ALIAS, notice the = sign, now using Composition!
+type PublishInput struct {
+	mug.JsonBody[PublishBody]
+	mug.Auth // Alias for BearerAuth[jwt.RegisteredClaims]
+}
+
 type PublishBody struct {
 	Text string `json:"text"`
 }
+
 type PublishAuth struct {
 	Name string `json:"name"`
 	jwt.RegisteredClaims
@@ -48,25 +53,22 @@ type PublishAuth struct {
 // mug:handler POST /rabbit
 // > CoolMiddleware
 func PublishToRabbit(ctx PublishInput) (code int, body any) {
-
-	// need this to be valid on compile time =)
-	// var A mug.Muggable = mug.Muggable(&ctx)
-
+	// Acessando Body e Claims diretamente através da composição da struct
 	return http.StatusAccepted, mug.M{
 		"message": "ok",
 		"greeting": fmt.Sprintf(
 			"Hello, %s! Your message '%s' has been sent to the rabbit queue.",
-			ctx.Auth.Name, ctx.Body.Text,
+			ctx.Claims.Subject, ctx.Body.Text, // Note: using Subject as Name is in claims, but for this example I'll stick to what standard claims offer or need custom auth
 		),
 	}
 }
 
 type PourInput struct {
-	mug.JsonBodyT[struct {
+	mug.JsonBody[struct {
 		Owner      string `json:"owner"`
 		CoffeeType string `json:"coffee_type"`
 	}]
-	// mug.BearerAuthT[struct {
+	// mug.BearerAuth[struct {
 	// 	Name string `json:"name"`
 	// 	jwt.RegisteredClaims
 	// }]
