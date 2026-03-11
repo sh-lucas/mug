@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -49,7 +48,7 @@ var internalErrorMsg = `{
 
 // Defines a new kegHandler in r (router), at path, with middlewares before handler.
 func MakeHandler[T any, U any](
-	r chi.Router,
+	r *http.ServeMux,
 	path string, handler func(input T) (code int, body U),
 	middlewares ...middleware,
 ) {

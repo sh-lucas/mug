@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi/v5"
 	"github.com/invopop/jsonschema"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -29,15 +28,15 @@ var registry []RouteSpec
 var swaggerTemplate []byte
 
 // ServeDocs serves the Swagger UI and the generated OpenAPI spec.
-func ServeDocs(r chi.Router) {
+func ServeDocs(r *http.ServeMux) {
 	// Serve swagger.json
-	r.Get("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		spec := generateOpenAPI()
 		jsoniter.NewEncoder(w).Encode(spec)
 	})
 
 	// Serve Swagger UI
-	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write(swaggerTemplate)
 	})

@@ -5,7 +5,6 @@ go 1.23.3
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.27.0

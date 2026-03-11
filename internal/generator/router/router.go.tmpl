@@ -3,12 +3,11 @@ package router
 import (
 	"net/http"
 	
-	"github.com/go-chi/chi/v5"
 	"github.com/sh-lucas/mug/pkg/spout"
 )
 
 func Route(addr string) {
-	router := chi.NewRouter()
+	router := http.NewServeMux()
 	
 	// handlers:
 	{{.Handlers}}
