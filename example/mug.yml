@@ -1,0 +1,14 @@
+port: 3000 # ou $PORT para env tlg
+
+resources:
+    Database: # nome qualquer
+        type: sqlite # no momento só esse suportado, sempre sqlc
+        data: data/database.db
+    database_2:
+        type: sqlite
+        data: data/$DATABASE_2_NAME.db
+
+envs:
+    - PORT
+    - DATABASE_2_NAME
+    - ...
